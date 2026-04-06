@@ -23,7 +23,7 @@ namespace TransportationManagement.Controllers
 			_context = context;
 		}
 
-		// LOGIN GET
+		// LOGIN GET details
 		[HttpGet]
 		public IActionResult Login(string? returnUrl = null)
 		{

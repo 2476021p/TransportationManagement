@@ -1,0 +1,34 @@
+@model IEnumerable<TransportationManagement.Models.FuelEntry>
+@{ ViewData["Title"] = "Fuel Entries"; }
+<div class="page-header">
+    <h2><i class="fas fa-gas-pump"></i> Fuel Usage Analytics</h2>
+    <div>
+        <a asp-action="AddFuelEntry" class="btn btn-primary"><i class="fas fa-plus"></i> Add Entry</a>
+        <a asp-action="GenerateFuelReport" class="btn btn-outline"><i class="fas fa-file-alt"></i> Report</a>
+    </div>
+</div>
+<div class="card">
+    <div class="table-search"><input type="text" id="searchInput" class="form-control" placeholder="Search fuel entries..." onkeyup="searchTable()" /></div>
+    <table class="table table-hover" id="mainTable">
+        <thead><tr><th>#</th><th>Vehicle</th><th>Quantity (L)</th><th>Cost (₹)</th><th>Odometer (km)</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody>
+        @{ int i=1; }
+        @foreach(var f in Model){
+            <tr>
+                <td>@i</td>
+                <td>@(f.Vehicle?.vehicleNumber ?? "-")</td>
+                <td>@f.fuelQuantity</td>
+                <td>₹@f.fuelCost</td>
+                <td>@f.odometerReading</td>
+                <td>@f.entryDate.ToString("dd MMM yyyy")</td>
+                <td class="action-btns">
+                    <a asp-action="Edit" asp-route-id="@f.fuelId" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                    <a asp-action="Delete" asp-route-id="@f.fuelId" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                </td>
+            </tr>
+        }
+        @if(!Model.Any()){<tr><td colspan="7" class="text-center empty-row">No fuel entries found.</td></tr>}
+        </tbody>
+    </table>
+</div>
+@section Scripts{<script>function searchTable(){const q=document.getElementById('searchInput').value.toLowerCase();document.querySelectorAll('#mainTable tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});}</script>}

@@ -1,0 +1,36 @@
+@model TransportationManagement.Models.MaintenanceRecord
+@{ ViewData["Title"] = "Update Service Record"; }
+<div class="page-header">
+    <h2><i class="fas fa-edit"></i> Update Service Record</h2>
+    <a asp-action="Index" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+<div class="card form-card">
+    <form asp-action="UpdateServiceRecord" method="post">
+        <input type="hidden" asp-for="maintenanceId" />
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <div class="form-row">
+            <div class="form-group col-6">
+                <label asp-for="vehicleId">Vehicle</label>
+                <select asp-for="vehicleId" asp-items="ViewBag.Vehicles" class="form-control"></select>
+            </div>
+            <div class="form-group col-6">
+                <label asp-for="serviceType">Service Type</label>
+                <input asp-for="serviceType" class="form-control" />
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-6">
+                <label asp-for="serviceDate">Service Date</label>
+                <input asp-for="serviceDate" type="date" class="form-control" />
+            </div>
+            <div class="form-group col-6">
+                <label asp-for="remarks">Remarks</label>
+                <input asp-for="remarks" class="form-control" />
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>

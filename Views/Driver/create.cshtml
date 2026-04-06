@@ -1,0 +1,82 @@
+﻿@* @if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div> *@
+@* } *@
+
+ 
+@model TransportationManagement.Models.Driver
+ 
+@{
+    ViewBag.Title = "Add Driver";
+}
+ 
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow p-4">
+                <h3 class="mb-4 text-center">Add Driver</h3>
+ 
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+ 
+                    <!-- Driver Name -->
+                    <div class="mb-3">
+                        <label asp-for="name" class="form-label">Driver Name</label>
+                        <input asp-for="name" class="form-control" placeholder="Enter driver name" />
+                        <span asp-validation-for="name" class="text-danger"></span>
+                    </div>
+ 
+                    <!-- License Number -->
+                    <div class="mb-3">
+                        <label asp-for="licenseNumber" class="form-label">License Number</label>
+                        <input asp-for="licenseNumber" class="form-control" placeholder="Enter license number" />
+                        <span asp-validation-for="licenseNumber" class="text-danger"></span>
+                    </div>
+ 
+                    <!-- Contact -->
+                    <div class="mb-3">
+                        <label asp-for="contactNumber" class="form-label">Contact Number</label>
+                        <input asp-for="contactNumber" class="form-control" placeholder="Enter contact number" />
+                        <span asp-validation-for="contactNumber" class="text-danger"></span>
+                    </div>
+ 
+                    <!-- Status -->
+                    <div class="mb-3">
+                        <label asp-for="status" class="form-label">Status</label>
+                        <select asp-for="status" class="form-control"
+                                asp-items="Html.GetEnumSelectList<TransportationManagement.Models.DriverStatus>()">
+                        </select>
+                    </div>
+ 
+                    <!-- 🔥 IMPORTANT: EMAIL -->
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input name="email" class="form-control" placeholder="Enter email" required />
+                    </div>
+ 
+                    <!-- 🔥 IMPORTANT: PASSWORD -->
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input name="password" type="password" class="form-control" placeholder="Enter password" required />
+                    </div>
+ 
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-between mt-3">
+                        <a asp-action="Index" class="btn btn-secondary">Back</a>
+                        <button type="submit" class="btn btn-success">Save Driver</button>
+                    </div>
+ 
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+ 

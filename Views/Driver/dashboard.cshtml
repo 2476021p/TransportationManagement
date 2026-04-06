@@ -1,0 +1,103 @@
+﻿@model IEnumerable<TransportationManagement.Models.Trip>
+@{
+    ViewBag.Title = "My Trips";
+}
+ 
+<div class="container mt-4">
+    <h3 class="mb-4">My Trips</h3>
+ 
+    @if (TempData["success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["success"]
+        </div>
+    }
+ 
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            No trips assigned yet.
+        </div>
+    }
+    else
+    {
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Vehicle</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var trip in Model)
+                {
+                    <tr>
+                        <td>@trip.tripId</td>
+                        <td>@trip.origin</td>
+                        <td>@trip.destination</td>
+                        <td>@trip.Vehicle?.model</td>
+                        <td>
+                            @if (trip.tripStatus ==
+                                                            TransportationManagement.Models.TripStatus.PLANNED)
+                            {
+                                <span class="badge bg-primary">PLANNED</span>
+                            }
+                            else if (trip.tripStatus ==
+                                TransportationManagement.Models.TripStatus.IN_PROGRESS)
+                            {
+                                <span class="badge bg-warning">IN PROGRESS</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">COMPLETED</span>
+                            }
+                        </td>
+                        <td>
+                            @if (trip.tripStatus ==
+                                                            TransportationManagement.Models.TripStatus.PLANNED)
+                            {
+                                <form asp-controller="Driver"
+                                      asp-action="StartTrip"
+                                      method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden"
+                                           name="id"
+                                           value="@trip.tripId" />
+                                    <button type="submit"
+                                            class="btn btn-primary btn-sm">
+                                        ▶ Start Trip
+                                    </button>
+                                </form>
+                            }
+                            else if (trip.tripStatus ==
+                                TransportationManagement.Models.TripStatus.IN_PROGRESS)
+                            {
+                                <form asp-controller="Driver"
+                                      asp-action="UpdateTripStatus"
+                                      method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden"
+                                           name="id"
+                                           value="@trip.tripId" />
+                                    <button type="submit"
+                                            class="btn btn-success btn-sm">
+                                        ✓ Complete Trip
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-success">✓ Done</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+ 

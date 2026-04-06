@@ -1,0 +1,37 @@
+@model IEnumerable<TransportationManagement.Models.Driver>
+ 
+<h2>Drivers</h2>
+ 
+<a asp-controller="Admin" asp-action="AddDriver" class="btn btn-success mb-2">
+    Add Driver
+</a>
+ 
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>License</th>
+            <th>Phone</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var driver in Model)
+        {
+            <tr>
+                <td>@driver.name</td>
+                <td>@driver.licenseNumber</td>
+                <td>@driver.contactNumber</td>
+                <td>
+                    <a asp-controller="Admin" asp-action="EditDriver" asp-route-id="@driver.driverId" class="btn btn-warning btn-sm">
+                        Edit
+                    </a>
+ 
+                    <a asp-controller="Admin" asp-action="DeleteDriver" asp-route-id="@driver.driverId" class="btn btn-danger btn-sm">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

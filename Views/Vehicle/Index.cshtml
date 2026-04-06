@@ -1,0 +1,71 @@
+@model IEnumerable<TransportationManagement.Models.Vehicle>
+@{
+    ViewData["Title"] = "Vehicles";
+}
+
+<div class="page-header">
+    <h2><i class="fas fa-car"></i> Fleet Vehicles</h2>
+    <a asp-action="AddVehicle" class="btn btn-primary"><i class="fas fa-plus"></i> Add Vehicle</a>
+</div>
+
+<div class="card">
+    <div class="table-search">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search vehicles..." onkeyup="searchTable()" />
+    </div>
+    <table class="table table-hover" id="mainTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Vehicle Number</th>
+                <th>Model</th>
+                <th>Capacity</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{ int i = 1; }
+            @foreach (var v in Model)
+            {
+                <tr>
+                    <td>@i</td>
+                    <td><strong>@v.vehicleNumber</strong></td>
+                    <td>@v.model</td>
+                    <td>@v.capacity</td>
+                    <td>
+                        <span class="badge badge-@(v.status == VehicleStatus.ACTIVE ? "success" : v.status == VehicleStatus.IN_SERVICE ? "warning" : "danger")">
+                            @v.status
+                        </span>
+                    </td>
+                    <td class="action-btns">
+                        <a asp-action="GetVehicleDetails" asp-route-id="@v.vehicleId" class="btn btn-sm btn-info" title="Details">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a asp-action="UpdateVehicle" asp-route-id="@v.vehicleId" class="btn btn-sm btn-warning" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@v.vehicleId" class="btn btn-sm btn-danger" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="6" class="text-center empty-row">No vehicles registered yet.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        function searchTable() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#mainTable tbody tr');
+            rows.forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
+            });
+        }
+    </script>
+}

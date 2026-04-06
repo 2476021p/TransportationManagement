@@ -1,0 +1,17 @@
+@model TransportationManagement.Models.Vehicle
+@{ ViewData["Title"] = "Vehicle Details"; }
+<div class="page-header">
+    <h2><i class="fas fa-car"></i> Vehicle Details</h2>
+    <a asp-action="Index" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+</div>
+<div class="card detail-card">
+    <div class="detail-row"><span class="detail-label">Vehicle ID</span><span class="detail-value">@Model.vehicleId</span></div>
+    <div class="detail-row"><span class="detail-label">Vehicle Number</span><span class="detail-value">@Model.vehicleNumber</span></div>
+    <div class="detail-row"><span class="detail-label">Model</span><span class="detail-value">@Model.model</span></div>
+    <div class="detail-row"><span class="detail-label">Capacity</span><span class="detail-value">@Model.capacity</span></div>
+    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-@(Model.status==VehicleStatus.ACTIVE?"success":Model.status==VehicleStatus.IN_SERVICE?"warning":"danger")">@Model.status</span></span></div>
+    <div class="form-actions">
+        <a asp-action="UpdateVehicle" asp-route-id="@Model.vehicleId" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
+        <a asp-action="Delete" asp-route-id="@Model.vehicleId" class="btn btn-danger"><i class="fas fa-trash"></i> Delete</a>
+    </div>
+</div>

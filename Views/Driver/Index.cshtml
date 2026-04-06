@@ -1,0 +1,146 @@
+@model IEnumerable<TransportationManagement.Models.Driver>
+@{
+    ViewData["Title"] = "Drivers";
+}
+ 
+<div class="page-header">
+    <h2><i class="fas fa-id-card"></i> Fleet Drivers</h2>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Driver
+    </a>
+</div>
+ 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+ 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+ 
+<div class="card">
+    <div class="table-responsive">
+ 
+        <!-- Search Box -->
+        <input type="text" id="searchInput"
+               class="form-control mb-3"
+               placeholder="Search drivers..."
+               onkeyup="searchTable()" />
+ 
+        <table class="table table-hover" id="mainTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>License Number</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int i = 1;
+                }
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td>@i</td>
+                        <td>@d.name</td>
+                        <td>@d.licenseNumber</td>
+                        <td>@d.contactNumber</td>
+ 
+                        <!-- Status Badge -->
+                        <td>
+                            <span class="badge badge-@(d.status == DriverStatus.AVAILABLE ? "success" : d.status == DriverStatus.ON_TRIP ? "warning" : "secondary")">
+                                @d.status
+                            </span>
+                        </td>
+ 
+                        <!-- ACTIONS -->
+                        <td class="action-btns">
+ 
+                            <!-- View Driver -->
+                            <a asp-action="GetDriverDetails"
+                                   asp-route-id="@d.driverId"
+                                   class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+ 
+                            <!-- Edit -->
+                            <a asp-action="Edit"
+                                   asp-route-id="@d.driverId"
+                                   class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+ 
+                            <!-- View Assigned Trips -->
+                            <a asp-action="GetAssignedTrips"
+                                   asp-route-id="@d.driverId"
+                                   class="btn btn-sm btn-secondary">
+                                <i class="fas fa-route"></i>
+                            </a>
+ 
+                            <!-- DELETE - FIXED AS POST FORM -->
+                            <form asp-action="Delete"
+                                  asp-route-id="@d.driverId"
+                                  method="post"
+                                  style="display:inline"
+                                  onsubmit="return confirmDelete('@d.name', '@d.status')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+ 
+                        </td>
+                    </tr>
+                    i++;
+                }
+ 
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            No drivers found
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+ 
+@section Scripts {
+    <script>
+        // Search function
+        function searchTable() {
+            const input = document.getElementById("searchInput")
+                .value.toLowerCase();
+            const rows = document.querySelectorAll("#mainTable tbody tr");
+ 
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+ 
+        // Delete confirmation - warns if driver is ON_TRIP
+        function confirmDelete(name, status) {
+            if (status === 'ON_TRIP') {
+                alert('Cannot delete ' + name +
+                    ' - driver is currently on a trip!');
+                return false;
+            }
+            return confirm('Are you sure you want to delete driver: '
+                + name + '?');
+        }
+    </script>
+}

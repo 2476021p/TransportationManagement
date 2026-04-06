@@ -1,0 +1,28 @@
+@model IEnumerable<TransportationManagement.Models.Vehicle>
+@{ ViewData["Title"] = "All Vehicles (Admin)"; }
+<div class="page-header">
+    <h2> All Vehicles</h2>
+    <a asp-controller="Vehicle" asp-action="AddVehicle" class="btn btn-primary"> Add Vehicle</a>
+</div>
+<div class="card">
+    <table class="table table-hover">
+        <thead><tr><th>#</th><th>Vehicle No</th><th>Model</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+        @{ int i=1; }
+        @foreach(var v in Model){
+            <tr>
+                <td>@i++</td>
+                <td>@v.vehicleNumber</td>
+                <td>@v.model</td>
+                <td>@v.capacity</td>
+                <td><span class="badge badge-@(v.status==VehicleStatus.ACTIVE?"success":v.status==VehicleStatus.IN_SERVICE?"warning":"danger")">@v.status</span></td>
+                <td>
+                    <a asp-controller="Vehicle" asp-action="GetVehicleDetails" asp-route-id="@v.vehicleId" class="btn btn-sm btn-info"></a>
+                    <a asp-controller="Vehicle" asp-action="UpdateVehicle" asp-route-id="@v.vehicleId" class="btn btn-sm btn-warning"></a>
+                </td>
+            </tr>
+        }
+        @if(!Model.Any()){<tr><td colspan="6" class="text-center">No vehicles found.</td></tr>}
+        </tbody>
+    </table>
+</div>

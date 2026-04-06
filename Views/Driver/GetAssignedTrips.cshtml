@@ -1,0 +1,38 @@
+@model IEnumerable<TransportationManagement.Models.Trip>
+ 
+<h2>Assigned Trips</h2>
+ 
+<table class="table">
+    <thead>
+        <tr>
+            <th>Origin</th>
+            <th>Destination</th>
+            <th>Vehicle</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+ 
+        @foreach (var t in Model)
+        {
+            <tr>
+                <td>@t.origin</td>
+                <td>@t.destination</td>
+                <td>@(t.Vehicle != null ? t.Vehicle.vehicleNumber : "-")</td>
+                <td>@t.tripStatus</td>
+                <td>
+                    <a asp-controller="Trip" asp-action="GetTripPlan" asp-route-id="@t.tripId">View</a>
+                </td>
+            </tr>
+        }
+ 
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="5">No trips assigned</td>
+            </tr>
+        }
+ 
+    </tbody>
+</table>

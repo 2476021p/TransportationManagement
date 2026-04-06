@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Transportation Management</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <div class="wrapper">
+            <!-- Sidebar -->
+            <nav class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo">
+                        @* <i class="fas fa-truck-moving"></i> *@
+                        <span>TransportMS</span>
+                    </div>
+                </div>
+                <ul class="sidebar-nav">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")" asp-controller="Admin" asp-action="Dashboard">
+                                @* <i class="fas fa-tachometer-alt"></i> *@
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")" asp-controller="Admin" asp-action="Users">
+                                @* <i class="fas fa-users-cog"></i> *@
+                                <span>Manage Users</span>
+                            </a>
+                        </li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("FleetManager"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vehicle" ? "active" : "")" asp-controller="Vehicle" asp-action="Index">
+                                @* <i class="fas fa-car"></i> *@
+                                <span>Vehicles</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Driver" ? "active" : "")" asp-controller="Driver" asp-action="Index">
+                                @* <i class="fas fa-id-card"></i> *@
+                                <span>Drivers</span>
+                            </a>
+                        </li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("FleetManager") || User.IsInRole("Driver"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Trip" ? "active" : "")" asp-controller="Trip" asp-action="Index">
+                                @* <i class="fas fa-route"></i> *@
+                                <span>Trips</span>
+                            </a>
+                        </li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("MaintenanceEngineer") || User.IsInRole("FleetManager"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Maintenance" ? "active" : "")" asp-controller="Maintenance" asp-action="Index">
+                                @* <i class="fas fa-wrench"></i> *@
+                                <span>Maintenance</span>
+                            </a>
+                        </li>
+                    }
+                    @if (User.IsInRole("Admin") || User.IsInRole("FleetManager"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Fuel" ? "active" : "")" asp-controller="Fuel" asp-action="Index">
+                                @* <i class="fas fa-gas-pump"></i> *@
+                                <span>Fuel</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+                <div class="sidebar-footer">
+                    @* <span class="user-info"><i class="fas fa-user-circle"></i> @User.Identity.Name</span> *@
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    </form>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="top-bar">
+                    <button class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 class="page-title">@ViewData["Title"]</h1>
+                </div>
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success"><i class="fas fa-check-circle"></i> @TempData["Success"]</div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> @TempData["Error"]</div>
+                }
+
+                <div class="content-area">
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @RenderBody()
+    }
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

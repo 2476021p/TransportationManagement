@@ -1,0 +1,135 @@
+@model TransportationManagement.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="dashboard-grid">
+    <div class="stat-card stat-blue">
+        @* <div class="stat-icon"><i class="fas fa-car"></i></div> *@
+        <div class="stat-info">
+            <h3>@Model.TotalVehicles</h3>
+            <p>Total Vehicles</p>
+        </div>
+        <a asp-action="Vehicles" class="stat-link">View All</a>
+    </div>
+    <div class="stat-card stat-green">
+        @* <div class="stat-icon"><i class="fas fa-id-card"></i></div> *@
+        <div class="stat-info">
+            <h3>@Model.TotalDrivers</h3>
+            <p>Total Drivers</p>
+        </div>
+        <a asp-action="Drivers" class="stat-link">View All</a>
+    </div>
+    <div class="stat-card stat-orange">
+        @* <div class="stat-icon"><i class="fas fa-route"></i></div> *@
+        <div class="stat-info">
+            <h3>@Model.TotalTrips</h3>
+            <p>Total Trips</p>
+        </div>
+        <a asp-action="Trips" class="stat-link">View All</a>
+    </div>
+    <div class="stat-card stat-red">
+        @* <div class="stat-icon"><i class="fas fa-wrench"></i></div> *@
+        <div class="stat-info">
+            <h3>@Model.TotalMaintenanceRecords</h3>
+            <p>Maintenance Records</p>
+        </div>
+        <a asp-action="Maintenance" class="stat-link">View All</a>
+    </div>
+    <div class="stat-card stat-purple">
+        @* <div class="stat-icon"><i class="fas fa-gas-pump"></i></div> *@
+        <div class="stat-info">
+            <h3>@Model.TotalFuelEntries</h3>
+            <p>Fuel Entries</p>
+        </div>
+        <a asp-action="Fuel" class="stat-link">View All</a>
+    </div>
+    <div class="stat-card stat-teal">
+        @* <div class="stat-icon"><i class="fas fa-users"></i></div> *@
+        <div class="stat-info">
+            <h3>@Model.TotalUsers</h3>
+            <p>System Users</p>
+        </div>
+        <a asp-action="Users" class="stat-link">View All</a>
+    </div>
+</div>
+
+<div class="dashboard-tables">
+    <div class="dash-table-card">
+        <div class="dash-table-header">
+            @* <h4><i class="fas fa-car"></i> Recent Vehicles</h4> *@
+            <a asp-controller="Vehicle" asp-action="Index" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <table class="table">
+            <thead>
+                <tr><th>Number</th><th>Model</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var v in Model.RecentVehicles)
+                {
+                    <tr>
+                        <td>@v.vehicleNumber</td>
+                        <td>@v.model</td>
+                        <td><span class="badge badge-@(v.status == VehicleStatus.ACTIVE ? "success" : v.status == VehicleStatus.IN_SERVICE ? "warning" : "danger")">@v.status</span></td>
+                    </tr>
+                }
+                @if (!Model.RecentVehicles.Any())
+                {
+                    <tr><td colspan="3" class="text-center">No vehicles found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="dash-table-card">
+        <div class="dash-table-header">
+            @* <h4><i class="fas fa-route"></i> Recent Trips</h4> *@
+            <a asp-controller="Trip" asp-action="Index" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <table class="table">
+            <thead>
+                <tr><th>Origin</th><th>Destination</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.RecentTrips)
+                {
+                    <tr>
+                        <td>@t.origin</td>
+                        <td>@t.destination</td>
+                        <td><span class="badge badge-@(t.tripStatus == TripStatus.COMPLETED ? "success" : t.tripStatus == TripStatus.IN_PROGRESS ? "warning" : "info")">@t.tripStatus</span></td>
+                    </tr>
+                }
+                @if (!Model.RecentTrips.Any())
+                {
+                    <tr><td colspan="3" class="text-center">No trips found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="dash-table-card">
+        <div class="dash-table-header">
+            @* <h4><i class="fas fa-wrench"></i> Recent Maintenance</h4> *@
+            <a asp-controller="Maintenance" asp-action="Index" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <table class="table">
+            <thead>
+                <tr><th>Service Type</th><th>Date</th><th>Remarks</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model.RecentMaintenance)
+                {
+                    <tr>
+                        <td>@m.serviceType</td>
+                        <td>@m.serviceDate.ToString("dd MMM yyyy")</td>
+                        <td>@(m.remarks ?? "-")</td>
+                    </tr>
+                }
+                @if (!Model.RecentMaintenance.Any())
+                {
+                    <tr><td colspan="3" class="text-center">No records found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

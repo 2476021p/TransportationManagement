@@ -1,0 +1,15 @@
+@{ ViewData["Title"] = "Home"; }
+<div class="page-header">
+    <h2><i class="fas fa-home"></i> Welcome</h2>
+</div>
+<div class="card" style="padding:2rem; text-align:center;">
+    <i class="fas fa-truck-moving" style="font-size:4rem; color:var(--primary); margin-bottom:1rem;"></i>
+    <h3>Smart Transportation & Fleet Operational Management System</h3>
+    <p>Use the sidebar to navigate through the modules.</p>
+    @if(User.IsInRole("Driver")){
+        <a asp-controller="Trip" asp-action="Index" class="btn btn-primary"><i class="fas fa-route"></i> View My Trips</a>
+    }
+    @if(User.IsInRole("MaintenanceEngineer")){
+        <a asp-controller="Maintenance" asp-action="Index" class="btn btn-primary"><i class="fas fa-wrench"></i> View Maintenance</a>
+    }
+</div>

@@ -1,0 +1,13 @@
+@model TransportationManagement.Models.Trip
+@{ ViewData["Title"] = "Delete Trip"; }
+<div class="page-header"><h2><i class="fas fa-trash"></i> Delete Trip</h2></div>
+<div class="card form-card">
+    <div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Delete trip from <strong>@Model.origin</strong> to <strong>@Model.destination</strong>?</div>
+    <form asp-action="Delete" method="post">
+        <input type="hidden" asp-for="tripId" />
+        <div class="form-actions">
+            <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Yes, Delete</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>

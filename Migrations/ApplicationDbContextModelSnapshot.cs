@@ -240,9 +240,6 @@ namespace TransportationManagement.Migrations
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
 
-                    b.Property<int?>("driverId1")
-                        .HasColumnType("int");
-
                     b.Property<string>("licenseNumber")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -260,8 +257,6 @@ namespace TransportationManagement.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("driverId");
-
-                    b.HasIndex("driverId1");
 
                     b.HasIndex("userId");
 
@@ -357,6 +352,9 @@ namespace TransportationManagement.Migrations
                     b.Property<int?>("driverId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("endDateTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("origin")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -364,6 +362,9 @@ namespace TransportationManagement.Migrations
 
                     b.Property<string>("plannedRoute")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("startDateTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("tripStatus")
                         .HasColumnType("int");
@@ -467,10 +468,6 @@ namespace TransportationManagement.Migrations
 
             modelBuilder.Entity("TransportationManagement.Models.Driver", b =>
                 {
-                    b.HasOne("TransportationManagement.Models.Driver", null)
-                        .WithMany("Drivers")
-                        .HasForeignKey("driverId1");
-
                     b.HasOne("TransportationManagement.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("userId");
@@ -528,8 +525,6 @@ namespace TransportationManagement.Migrations
 
             modelBuilder.Entity("TransportationManagement.Models.Driver", b =>
                 {
-                    b.Navigation("Drivers");
-
                     b.Navigation("FuelEntries");
 
                     b.Navigation("MaintenanceRecords");

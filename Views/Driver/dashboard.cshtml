@@ -1,103 +1,139 @@
-﻿@model IEnumerable<TransportationManagement.Models.Trip>
+﻿@model List<TransportationManagement.Models.Trip>
+ 
 @{
-    ViewBag.Title = "My Trips";
+    ViewData["Title"] = "Driver Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
  
 <div class="container mt-4">
-    <h3 class="mb-4">My Trips</h3>
+    <h2 class="mb-4">My Assigned Trips</h2>
  
     @if (TempData["success"] != null)
     {
-        <div class="alert alert-success">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
             @TempData["success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
  
-    @if (!Model.Any())
+    @if (Model == null || !Model.Any())
     {
         <div class="alert alert-info">
-            No trips assigned yet.
+            No trips have been assigned to you yet.
         </div>
     }
     else
     {
-        <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Vehicle</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var trip in Model)
-                {
-                    <tr>
-                        <td>@trip.tripId</td>
-                        <td>@trip.origin</td>
-                        <td>@trip.destination</td>
-                        <td>@trip.Vehicle?.model</td>
-                        <td>
-                            @if (trip.tripStatus ==
-                                                            TransportationManagement.Models.TripStatus.PLANNED)
-                            {
-                                <span class="badge bg-primary">PLANNED</span>
-                            }
-                            else if (trip.tripStatus ==
-                                TransportationManagement.Models.TripStatus.IN_PROGRESS)
-                            {
-                                <span class="badge bg-warning">IN PROGRESS</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-success">COMPLETED</span>
-                            }
-                        </td>
-                        <td>
-                            @if (trip.tripStatus ==
-                                                            TransportationManagement.Models.TripStatus.PLANNED)
-                            {
-                                <form asp-controller="Driver"
-                                      asp-action="StartTrip"
-                                      method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden"
-                                           name="id"
-                                           value="@trip.tripId" />
-                                    <button type="submit"
-                                            class="btn btn-primary btn-sm">
-                                        ▶ Start Trip
-                                    </button>
-                                </form>
-                            }
-                            else if (trip.tripStatus ==
-                                TransportationManagement.Models.TripStatus.IN_PROGRESS)
-                            {
-                                <form asp-controller="Driver"
-                                      asp-action="UpdateTripStatus"
-                                      method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden"
-                                           name="id"
-                                           value="@trip.tripId" />
-                                    <button type="submit"
-                                            class="btn btn-success btn-sm">
-                                        ✓ Complete Trip
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <span class="text-success">✓ Done</span>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Trip ID</th>
+                            <th>Origin</th>
+                            <th>Destination</th>
+                            <th>Vehicle</th>
+                            <th>Start Date & Time</th>
+                            <th>End Date & Time</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var trip in Model)
+                        {
+                            <tr>
+                                <td>@trip.tripId</td>
+                                <td>@trip.origin</td>
+                                <td>@trip.destination</td>
+                                <td>
+                                    @(trip.Vehicle != null
+                                        ? trip.Vehicle.vehicleNumber
+                                        : "N/A")
+                                </td>
+                                <td>
+                                    @(trip.startDateTime.HasValue
+                                        ? trip.startDateTime.Value.ToString("dd MMM yyyy hh:mm tt")
+                                        : "Not Started")
+                                </td>
+                                <td>
+                                    @(trip.endDateTime.HasValue
+                                        ? trip.endDateTime.Value.ToString("dd MMM yyyy hh:mm tt")
+                                        : "Not Completed")
+                                </td>
+                                <td>
+                                    @if (trip.tripStatus == TransportationManagement.Models.TripStatus.PLANNED)
+                                    {
+                                        <span class="badge bg-warning text-dark">PLANNED</span>
+                                    }
+                                    else if (trip.tripStatus == TransportationManagement.Models.TripStatus.IN_PROGRESS)
+                                    {
+                                        <span class="badge bg-primary">IN PROGRESS</span>
+                                    }
+                                    else if (trip.tripStatus == TransportationManagement.Models.TripStatus.COMPLETED)
+                                    {
+                                        <span class="badge bg-success">COMPLETED</span>
+                                    }
+                                </td>
+                                <td>
+                                    @* PLANNED → Start Trip *@
+                                    @if (trip.tripStatus == TransportationManagement.Models.TripStatus.PLANNED)
+                                    {
+                                        <form method="post"
+                                              asp-controller="Trip"
+                                              asp-action="StartTrip"
+                                              asp-route-tripId="@trip.tripId"
+                                              style="display:inline;">
+ 
+                                            @Html.AntiForgeryToken()
+ 
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-primary"
+                                                    onclick="return confirm('Start this trip?')">
+                                                Start Trip
+                                            </button>
+                                        </form>
+                                    }
+ 
+                                    @* IN PROGRESS → Complete Trip *@
+                                    else if (trip.tripStatus == TransportationManagement.Models.TripStatus.IN_PROGRESS)
+                                    {
+                                        <form method="post"
+                                              asp-controller="Trip"
+                                              asp-action="CompleteTrip"
+                                              asp-route-tripId="@trip.tripId"
+                                              style="display:inline;">
+ 
+                                            @Html.AntiForgeryToken()
+ 
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-success"
+                                                    onclick="return confirm('Mark trip as completed?')">
+                                                Complete Trip
+                                            </button>
+                                        </form>
+                                    }
+ 
+                                    @* COMPLETED → Done *@
+                                    else if (trip.tripStatus == TransportationManagement.Models.TripStatus.COMPLETED)
+                                    {
+                                        <span class="text-muted">— Done —</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     }
 </div>
- 

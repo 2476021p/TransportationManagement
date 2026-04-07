@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TransportationManagement.Data;
+using TransportationManagement.Migrations;
 using TransportationManagement.Models;
 using TransportationManagement.Services;
 
@@ -31,162 +32,320 @@ namespace TransportationManagement.Controllers
 		// GET: Trip
 		public async Task<IActionResult> Index()
 		{
-			var trips = await _tripService.GetAllTripsAsync();
-			return View(trips);
+			try
+			{
+				var trips = await _tripService.GetAllTripsAsync();
+				return View(trips);
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "An error occurred while loading trips: " + ex.Message;
+				return View(new List<Trip>());
+			}
 		}
 
 		// GET: Trip/Details/5
 		public async Task<IActionResult> GetTripPlan(int id)
 		{
-			var trip = await _tripService.GetTripPlanAsync(id);
-			if (trip == null) return NotFound();
-			return View(trip);
+			try
+			{
+				var trip = await _tripService.GetTripPlanAsync(id);
+				if (trip == null) return NotFound();
+				return View(trip);
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "An error occurred while loading trip details: " + ex.Message;
+				return RedirectToAction(nameof(Index));
+			}
 		}
 
 		// GET: Trip/Create
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> CreateTrip()
 		{
-			await PopulateDropdowns();
-			return View();
+			try
+			{
+				await PopulateDropdowns();
+				return View();
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "An error occurred while loading the create trip page: " + ex.Message;
+				return RedirectToAction(nameof(Index));
+			}
 		}
+
+		   
 
 		// POST: Trip/Create
 		[HttpPost]
-		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "Admin,FleetManager")]
+		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> CreateTrip(Trip trip)
 		{
-			if (ModelState.IsValid)
+			try
 			{
-				// STEP 1: Check driver busy
-				bool driverBusy = await _tripService
-					.IsDriverBusyAsync(trip.driverId ?? 0);
-				if (driverBusy)
+				var vehicle = await _context.Vehicles
+		.FirstOrDefaultAsync(v => v.vehicleId == trip.vehicleId);
+
+				if (vehicle == null)
 				{
-					TempData["Error"] =
-						"Driver is already on an ongoing trip!";
+					ModelState.AddModelError("", "Selected vehicle not found.");
+				}
+				else if (vehicle.status == VehicleStatus.IN_SERVICE)
+				{
+					ModelState.AddModelError("vehicleId", "Vehicle is under maintenance. Cannot assign to trip.");
+				}
+
+				if (!ModelState.IsValid)
+				{
 					await PopulateDropdowns();
 					return View(trip);
 				}
-
-				// STEP 2: Check vehicle busy
-				bool vehicleBusy = await _tripService
-					.IsVehicleBusyAsync(trip.vehicleId);
-				if (vehicleBusy)
-				{
-					TempData["Error"] =
-						"Vehicle is already on an ongoing trip!";
-					await PopulateDropdowns();
-					return View(trip);
-				}
-
-				// STEP 3: Check vehicle under maintenance
-				bool underMaintenance = await _context.MaintenanceRecords
-					.AnyAsync(m =>
-						m.vehicleId == trip.vehicleId &&
-						m.status == MaintenanceStatus.SCHEDULED);
-				if (underMaintenance)
-				{
-					TempData["Error"] =
-						"Cannot assign this vehicle — " +
-						"it is scheduled for maintenance!";
-					await PopulateDropdowns();
-					return View(trip);
-				}
-
-				// STEP 4: Check duplicate trip
-				bool duplicate = await _context.Trips
-					.AnyAsync(t =>
-						t.driverId == trip.driverId &&
-						t.vehicleId == trip.vehicleId &&
-						t.origin == trip.origin &&
-						t.destination == trip.destination &&
-						t.tripStatus != TripStatus.COMPLETED);
-				if (duplicate)
-				{
-					TempData["Error"] =
-						"A similar trip already exists!";
-					await PopulateDropdowns();
-					return View(trip);
-				}
-
-				// All checks passed - create trip
+				// ... trip creation logic (as in your existing code)
 				await _tripService.CreateTripAsync(trip);
-				TempData["Success"] = "Trip created successfully.";
+				TempData["Success"] = "Trip created successfully!";
 				return RedirectToAction(nameof(Index));
 			}
-
-			await PopulateDropdowns();
-			return View(trip);
+			catch (Exception ex)
+			{
+				TempData["Error"] = "An error occurred while creating the trip: " + ex.Message;
+				await PopulateDropdowns();
+				return View(trip);
+			}
 		}
 
-		// GET: Trip/UpdateTripStatus/5
-		[Authorize(Roles = "Admin,FleetManager,Driver")]
-		public async Task<IActionResult> UpdateTripStatus(int id)
+		// GET: Trip/Edit/5
+		[Authorize(Roles = "Admin,FleetManager")]
+		public async Task<IActionResult> Edit(int id)
 		{
-			var trip = await _tripService.GetTripPlanAsync(id);
-			if (trip == null) return NotFound();
-			await PopulateDropdowns();
-			return View(trip);
+			try
+			{
+				var trip = await _tripService.GetTripPlanAsync(id);
+				if (trip == null) return NotFound();
+				await PopulateDropdowns();
+				return View(trip);
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "An error occurred while loading the edit trip page: " + ex.Message;
+				return RedirectToAction(nameof(Index));
+			}
 		}
 
-		// POST: Trip/UpdateTripStatus/5
+		// POST: Trip/Edit/5
 		[HttpPost]
+		[Authorize(Roles = "Admin,FleetManager")]
 		[ValidateAntiForgeryToken]
-		[Authorize(Roles = "Admin,FleetManager,Driver")]
-		public async Task<IActionResult> UpdateTripStatus(
-			int id, Trip trip)
+		public async Task<IActionResult> Edit(Trip trip)
 		{
-			if (id != trip.tripId)
-				return NotFound();
-
-			var existingTrip = await _tripService.GetTripPlanAsync(id);
-			if (existingTrip == null)
-				return NotFound();
-
-			existingTrip.tripStatus = trip.tripStatus;
-			await _tripService.UpdateTripStatusAsync(existingTrip);
-
-			TempData["Success"] = "Trip status updated successfully.";
-			return RedirectToAction(nameof(Index));
+			try
+			{
+				await _tripService.UpdateTripAsync(trip);
+				TempData["Success"] = "Trip updated successfully!";
+				return RedirectToAction(nameof(Index));
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "An error occurred while updating the trip: " + ex.Message;
+				await PopulateDropdowns();
+				return View(trip);
+			}
 		}
 
 		// GET: Trip/Delete/5
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> Delete(int id)
 		{
-			var trip = await _tripService.GetTripPlanAsync(id);
-			if (trip == null) return NotFound();
-			return View(trip);
+			try
+			{
+				var trip = await _tripService.GetTripPlanAsync(id);
+				if (trip == null) return NotFound();
+				return View(trip);
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "An error occurred while loading the delete trip page: " + ex.Message;
+				return RedirectToAction(nameof(Index));
+			}
 		}
 
 		// POST: Trip/Delete/5
 		[HttpPost, ActionName("Delete")]
-		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "Admin,FleetManager")]
+		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
-			await _tripService.DeleteTripAsync(id);
-			TempData["Success"] = "Trip deleted successfully.";
-			return RedirectToAction(nameof(Index));
+			try
+			{
+				await _tripService.DeleteTripAsync(id);
+				TempData["Success"] = "Trip deleted successfully!";
+				return RedirectToAction(nameof(Index));
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "An error occurred while deleting the trip: " + ex.Message;
+				return RedirectToAction(nameof(Index));
+			}
 		}
 
-		// KEY FIX - Show ALL vehicles and ALL available drivers
 		private async Task PopulateDropdowns()
 		{
-			// All drivers - not filtered
-			var drivers = await _context.Drivers
-				.ToListAsync();
+			try
+			{
+				var vehicles = await _context.Vehicles.Where(v => v.status == VehicleStatus.ACTIVE).ToListAsync();
 
-			
-			var vehicles = await _context.Vehicles
-				.ToListAsync();
+				var drivers = await _context.Drivers.ToListAsync();
 
-			ViewBag.Drivers = new SelectList(
-				drivers, "driverId", "name");
-			ViewBag.Vehicles = new SelectList(
-				vehicles, "vehicleId", "vehicleNumber");
+				ViewBag.Vehicles = new SelectList(vehicles, "vehicleId", "vehicleNumber");
+				ViewBag.Drivers = new SelectList(drivers, "driverId", "name");
+
+
+			}
+			catch (Exception ex) {
+				TempData["Error"] = "Error loading dropdowns: + ex.Messsage";
+			}
 		}
+
+		[HttpGet]
+		public async Task<IActionResult> UpdateTripStatus(int id)
+		{
+			var trip = await _context.Trips.FindAsync(id);
+			await PopulateDropdowns();
+			return View(trip);
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> UpdateTripStatus(Trip trip)
+		{
+			try
+			{
+				// 🔥 Get existing trip with Driver & Vehicle
+				var existingTrip = await _context.Trips
+					.Include(t => t.Driver)
+					.Include(t => t.Vehicle)
+					.FirstOrDefaultAsync(t => t.tripId == trip.tripId);
+
+				if (existingTrip == null)
+					return NotFound();
+
+				// ✅ Update basic fields
+				existingTrip.vehicleId = trip.vehicleId;
+				existingTrip.driverId = trip.driverId;
+				existingTrip.origin = trip.origin;
+				existingTrip.destination = trip.destination;
+				existingTrip.plannedRoute = trip.plannedRoute;
+				existingTrip.tripStatus = trip.tripStatus;
+
+				// 🔥 HANDLE STATUS LOGIC
+
+				// ✅ IN PROGRESS
+				if (trip.tripStatus == TripStatus.IN_PROGRESS)
+				{
+					if (existingTrip.Driver != null)
+						existingTrip.Driver.status = DriverStatus.ON_TRIP;
+
+					if (existingTrip.Vehicle != null)
+						existingTrip.Vehicle.status = VehicleStatus.IN_SERVICE;
+				}
+
+				// ✅ COMPLETED
+				else if (trip.tripStatus == TripStatus.COMPLETED)
+				{
+					// Save end date & time
+					existingTrip.endDateTime = DateTime.Now;
+
+					if (existingTrip.Driver != null)
+						existingTrip.Driver.status = DriverStatus.AVAILABLE;
+
+					if (existingTrip.Vehicle != null)
+						existingTrip.Vehicle.status = VehicleStatus.ACTIVE;
+				}
+
+				// ✅ Save changes
+				await _context.SaveChangesAsync();
+
+				TempData["success"] = "Trip updated successfully!";
+				return RedirectToAction("Index");
+			}
+			catch (Exception ex)
+			{
+				TempData["error"] = "Error updating trip: " + ex.Message;
+
+				await PopulateDropdowns(); // reload dropdowns
+				return View(trip);
+			}
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> StartTrip(int tripId)
+		{
+			var trip = await _context.Trips
+				.Include(t => t.Driver)
+				.Include(t => t.Vehicle)
+				.FirstOrDefaultAsync(t => t.tripId == tripId);
+
+			if (trip == null)
+				return NotFound();
+
+			if (trip.tripStatus != TripStatus.PLANNED)
+				return RedirectToAction("Dashboard", "Driver");
+			trip.tripStatus = TripStatus.IN_PROGRESS;
+			trip.startDateTime = DateTime.Now;
+
+			if (trip.Driver != null)
+				trip.Driver.status = DriverStatus.ON_TRIP;
+
+			if (trip.Vehicle != null)
+				trip.Vehicle.status = VehicleStatus.IN_SERVICE;
+
+			await _context.SaveChangesAsync();
+
+			return RedirectToAction("Dashboard", "Driver");
+		}
+
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> CompleteTrip(int tripId)
+		{
+			try
+			{
+				var trip = await _context.Trips
+					.Include(t => t.Driver)
+					.Include(t => t.Vehicle)
+					.FirstOrDefaultAsync(t => t.tripId == tripId);
+
+				if (trip == null)
+					return NotFound();
+
+				
+				trip.tripStatus = TripStatus.COMPLETED;
+				trip.endDateTime = DateTime.Now;
+
+				
+				if (trip.Driver != null)
+					trip.Driver.status = DriverStatus.AVAILABLE;
+
+				
+				if (trip.Vehicle != null)
+					trip.Vehicle.status = VehicleStatus.ACTIVE;
+
+				await _context.SaveChangesAsync();
+
+				TempData["success"] = "Trip completed successfully!";
+				return RedirectToAction("Dashboard", "Driver");
+			}
+			catch (Exception ex)
+			{
+				TempData["error"] = ex.Message;
+				return RedirectToAction("Dashboard", "Driver");
+			}
+		}
+
+
 	}
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TransportationManagement.Data;
+using TransportationManagement.Migrations;
 using TransportationManagement.Models;
 using TransportationManagement.Services;
 
@@ -97,7 +98,7 @@ namespace TransportationManagement.Controllers
 					return View(driver);
 				}
 
-				// FIX 1: Duplicate contact number check
+				// Duplicate contact number check
 				var drivers = await _driverService.GetAllDriversAsync();
 				if (drivers.Any(d => d.contactNumber == driver.contactNumber))
 				{
@@ -105,7 +106,7 @@ namespace TransportationManagement.Controllers
 					return View(driver);
 				}
 
-				var numbers = await _driverService.GetAllDriversAsync();
+				// Duplicate license number check
 				if (drivers.Any(d => d.licenseNumber == driver.licenseNumber))
 				{
 					TempData["Error"] = "License number already exists!";
@@ -130,7 +131,7 @@ namespace TransportationManagement.Controllers
 					// STEP 3 - Assign role
 					await _userManager.AddToRoleAsync(user, "Driver");
 
-					// STEP 4 - Link user to driver (your existing logic, just fixed safely)
+					// STEP 4 - Link user to driver
 					var savedDriver = await _context.Drivers
 						.OrderByDescending(d => d.driverId)
 						.FirstOrDefaultAsync();
@@ -187,7 +188,7 @@ namespace TransportationManagement.Controllers
 				if (!ModelState.IsValid)
 					return View("~/Views/Driver/AddDriver.cshtml", driver);
 
-				 _context.Update(driver);
+				_context.Update(driver);
 				await _context.SaveChangesAsync();
 				return RedirectToAction(nameof(Index));
 			}
@@ -231,8 +232,7 @@ namespace TransportationManagement.Controllers
 						await _userManager.DeleteAsync(user);
 				}
 
-				// Delete driver - SetNull in DbContext will automatically
-				// set driverId to null in trips (trips are kept)
+				// Delete driver
 				await _driverService.DeleteDriverAsync(id);
 				TempData["Success"] = $"Driver '{driver.name}' deleted successfully!";
 				return RedirectToAction(nameof(Index));
@@ -250,13 +250,22 @@ namespace TransportationManagement.Controllers
 			try
 			{
 				var driverIdString = HttpContext.Session.GetString("DriverId");
-				// ... dashboard logic
-				return View();
+				if (string.IsNullOrEmpty(driverIdString))
+					return RedirectToAction("Login", "Account");
+
+				int driverId = int.Parse(driverIdString);
+
+				var trips = await _context.Trips
+					.Include(t => t.Vehicle)
+					.Where(t => t.driverId == driverId)
+					.ToListAsync();
+
+				return View(trips);
 			}
 			catch (Exception ex)
 			{
 				TempData["Error"] = "An error occurred while loading the dashboard: " + ex.Message;
-				return View();
+				return View(new List<Trip>());
 			}
 		}
 
@@ -282,12 +291,16 @@ namespace TransportationManagement.Controllers
 				// Update trip status
 				trip.tripStatus = TripStatus.IN_PROGRESS;
 
+				// ✅ Save start date and time
+				trip.startDateTime = DateTime.Now;
+
 				// Update driver status to ON_TRIP
 				if (trip.Driver != null)
 					trip.Driver.status = DriverStatus.ON_TRIP;
 
-				// Update vehicle status to ON_TRIP
-				if (trip.Vehicle != null)
+				// Update vehicle status to IN_SERVICE
+				if(trip.Vehicle != null)
+
 					trip.Vehicle.status = VehicleStatus.IN_SERVICE;
 
 				await _context.SaveChangesAsync();
@@ -303,47 +316,6 @@ namespace TransportationManagement.Controllers
 		}
 
 		// ==================== COMPLETE TRIP ====================
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> UpdateTripStatus(int id)
-		{
-			try
-			{
-				var driverIdString = HttpContext.Session.GetString("DriverId");
-				if (string.IsNullOrEmpty(driverIdString))
-					return RedirectToAction("Login", "Account");
-
-				var trip = await _context.Trips
-					.Include(t => t.Vehicle)
-					.Include(t => t.Driver)
-					.FirstOrDefaultAsync(t => t.tripId == id);
-
-				if (trip == null)
-					return NotFound();
-
-				// Update trip to COMPLETED
-				trip.tripStatus = TripStatus.COMPLETED;
-
-				// Set driver back to AVAILABLE
-				if (trip.Driver != null)
-					trip.Driver.status = DriverStatus.AVAILABLE;
-
-				// Set vehicle back to AVAILABLE
-				if (trip.Vehicle != null)
-					trip.Vehicle.status = VehicleStatus.ACTIVE;
-
-				await _context.SaveChangesAsync();
-
-				TempData["success"] = "Trip completed!";
-				return RedirectToAction("Dashboard");
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while completing the trip: " + ex.Message;
-				return RedirectToAction("Dashboard");
-			}
-		}
+		
 	}
 }
-
-

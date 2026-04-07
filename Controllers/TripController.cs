@@ -29,7 +29,7 @@ namespace TransportationManagement.Controllers
 			_context = context;
 		}
 
-		// GET: Trip
+		
 		public async Task<IActionResult> Index()
 		{
 			try
@@ -44,7 +44,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Trip/Details/5
+		
 		public async Task<IActionResult> GetTripPlan(int id)
 		{
 			try
@@ -60,7 +60,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Trip/Create
+		
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> CreateTrip()
 		{
@@ -78,7 +78,7 @@ namespace TransportationManagement.Controllers
 
 		   
 
-		// POST: Trip/Create
+		
 		[HttpPost]
 		[Authorize(Roles = "Admin,FleetManager")]
 		[ValidateAntiForgeryToken]
@@ -103,7 +103,7 @@ namespace TransportationManagement.Controllers
 					await PopulateDropdowns();
 					return View(trip);
 				}
-				// ... trip creation logic (as in your existing code)
+				
 				await _tripService.CreateTripAsync(trip);
 				TempData["Success"] = "Trip created successfully!";
 				return RedirectToAction(nameof(Index));
@@ -116,7 +116,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Trip/Edit/5
+		
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> Edit(int id)
 		{
@@ -134,7 +134,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// POST: Trip/Edit/5
+		
 		[HttpPost]
 		[Authorize(Roles = "Admin,FleetManager")]
 		[ValidateAntiForgeryToken]
@@ -154,7 +154,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Trip/Delete/5
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> Delete(int id)
 		{
@@ -171,7 +170,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// POST: Trip/Delete/5
+		
 		[HttpPost, ActionName("Delete")]
 		[Authorize(Roles = "Admin,FleetManager")]
 		[ValidateAntiForgeryToken]
@@ -222,7 +221,6 @@ namespace TransportationManagement.Controllers
 		{
 			try
 			{
-				// 🔥 Get existing trip with Driver & Vehicle
 				var existingTrip = await _context.Trips
 					.Include(t => t.Driver)
 					.Include(t => t.Vehicle)
@@ -231,7 +229,7 @@ namespace TransportationManagement.Controllers
 				if (existingTrip == null)
 					return NotFound();
 
-				// ✅ Update basic fields
+			
 				existingTrip.vehicleId = trip.vehicleId;
 				existingTrip.driverId = trip.driverId;
 				existingTrip.origin = trip.origin;
@@ -239,9 +237,8 @@ namespace TransportationManagement.Controllers
 				existingTrip.plannedRoute = trip.plannedRoute;
 				existingTrip.tripStatus = trip.tripStatus;
 
-				// 🔥 HANDLE STATUS LOGIC
 
-				// ✅ IN PROGRESS
+				
 				if (trip.tripStatus == TripStatus.IN_PROGRESS)
 				{
 					if (existingTrip.Driver != null)
@@ -251,10 +248,9 @@ namespace TransportationManagement.Controllers
 						existingTrip.Vehicle.status = VehicleStatus.IN_SERVICE;
 				}
 
-				// ✅ COMPLETED
 				else if (trip.tripStatus == TripStatus.COMPLETED)
 				{
-					// Save end date & time
+					
 					existingTrip.endDateTime = DateTime.Now;
 
 					if (existingTrip.Driver != null)
@@ -264,7 +260,7 @@ namespace TransportationManagement.Controllers
 						existingTrip.Vehicle.status = VehicleStatus.ACTIVE;
 				}
 
-				// ✅ Save changes
+				
 				await _context.SaveChangesAsync();
 
 				TempData["success"] = "Trip updated successfully!";
@@ -274,7 +270,7 @@ namespace TransportationManagement.Controllers
 			{
 				TempData["error"] = "Error updating trip: " + ex.Message;
 
-				await PopulateDropdowns(); // reload dropdowns
+				await PopulateDropdowns(); 
 				return View(trip);
 			}
 		}

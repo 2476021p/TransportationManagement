@@ -29,7 +29,7 @@ namespace TransportationManagement.Controllers
 			_context = context;
 		}
 
-		// ==================== INDEX ====================
+		
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> Index()
 		{
@@ -45,7 +45,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ==================== CREATE GET ====================
+		
 		[Authorize(Roles = "Admin,FleetManager")]
 		public IActionResult Create()
 		{
@@ -60,7 +60,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ==================== CREATE POST ====================
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "Admin,FleetManager")]
@@ -68,12 +68,11 @@ namespace TransportationManagement.Controllers
 		{
 			try
 			{
-				// Remove unwanted validations
 				ModelState.Remove("User");
 				ModelState.Remove("UserId");
 				ModelState.Remove("Trips");
 
-				// X Model validation
+				
 				if (!ModelState.IsValid)
 				{
 					var modelErrors = string.Join(" | ", ModelState.Values
@@ -83,14 +82,14 @@ namespace TransportationManagement.Controllers
 					return View(driver);
 				}
 
-				// Email/password empty check
+				
 				if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
 				{
 					TempData["Error"] = "Email and Password are required.";
 					return View(driver);
 				}
 
-				// X Email already exists
+			
 				var existingUser = await _userManager.FindByEmailAsync(email);
 				if (existingUser != null)
 				{
@@ -98,7 +97,7 @@ namespace TransportationManagement.Controllers
 					return View(driver);
 				}
 
-				// Duplicate contact number check
+				
 				var drivers = await _driverService.GetAllDriversAsync();
 				if (drivers.Any(d => d.contactNumber == driver.contactNumber))
 				{
@@ -106,18 +105,17 @@ namespace TransportationManagement.Controllers
 					return View(driver);
 				}
 
-				// Duplicate license number check
+
 				if (drivers.Any(d => d.licenseNumber == driver.licenseNumber))
 				{
 					TempData["Error"] = "License number already exists!";
 					return View(driver);
 				}
 
-				// STEP 1 - Save driver
+			
 				driver.status = DriverStatus.AVAILABLE;
 				await _driverService.AddDriverAsync(driver);
 
-				// STEP 2 - Create Identity user
 				var user = new ApplicationUser
 				{
 					UserName = email,
@@ -128,10 +126,10 @@ namespace TransportationManagement.Controllers
 
 				if (result.Succeeded)
 				{
-					// STEP 3 - Assign role
+					
 					await _userManager.AddToRoleAsync(user, "Driver");
 
-					// STEP 4 - Link user to driver
+					
 					var savedDriver = await _context.Drivers
 						.OrderByDescending(d => d.driverId)
 						.FirstOrDefaultAsync();
@@ -147,7 +145,7 @@ namespace TransportationManagement.Controllers
 				}
 				else
 				{
-					// X If user creation fails -> rollback driver
+					
 					await _driverService.DeleteDriverAsync(driver.driverId);
 					var identityErrors = string.Join(" | ", result.Errors.Select(e => e.Description));
 					TempData["Error"] = "Account creation failed: " + identityErrors;
@@ -161,7 +159,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ==================== EDIT GET ====================
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> Edit(int id)
 		{
@@ -178,7 +175,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ==================== EDIT POST ====================
 		[HttpPost]
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> Edit(Driver driver)
@@ -199,7 +195,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ==================== DELETE DRIVER ====================
+		
 		[HttpPost]
 		[Authorize(Roles = "Admin,FleetManager")]
 		[ValidateAntiForgeryToken]
@@ -214,7 +210,7 @@ namespace TransportationManagement.Controllers
 					return RedirectToAction(nameof(Index));
 				}
 
-				// BLOCK if driver is ON a trip
+			
 				var activeTrip = await _context.Trips
 					.FirstOrDefaultAsync(t => t.driverId == id &&
 											  t.tripStatus == TripStatus.IN_PROGRESS);
@@ -224,7 +220,7 @@ namespace TransportationManagement.Controllers
 					return RedirectToAction(nameof(Index));
 				}
 
-				// Delete Identity user account
+				
 				if (driver.userId != null)
 				{
 					var user = await _userManager.FindByIdAsync(driver.userId);
@@ -232,7 +228,6 @@ namespace TransportationManagement.Controllers
 						await _userManager.DeleteAsync(user);
 				}
 
-				// Delete driver
 				await _driverService.DeleteDriverAsync(id);
 				TempData["Success"] = $"Driver '{driver.name}' deleted successfully!";
 				return RedirectToAction(nameof(Index));
@@ -244,7 +239,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ==================== DRIVER DASHBOARD ====================
+		
 		public async Task<IActionResult> Dashboard()
 		{
 			try
@@ -269,7 +264,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ==================== START TRIP ====================
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> StartTrip(int id)
@@ -288,17 +283,17 @@ namespace TransportationManagement.Controllers
 				if (trip == null)
 					return NotFound();
 
-				// Update trip status
+				
 				trip.tripStatus = TripStatus.IN_PROGRESS;
 
-				// ✅ Save start date and time
+				
 				trip.startDateTime = DateTime.Now;
 
-				// Update driver status to ON_TRIP
+				
 				if (trip.Driver != null)
 					trip.Driver.status = DriverStatus.ON_TRIP;
 
-				// Update vehicle status to IN_SERVICE
+				
 				if(trip.Vehicle != null)
 
 					trip.Vehicle.status = VehicleStatus.IN_SERVICE;
@@ -315,7 +310,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ==================== COMPLETE TRIP ====================
 		
 	}
 }

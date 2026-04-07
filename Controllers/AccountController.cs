@@ -24,7 +24,7 @@ namespace TransportationManagement.Controllers
 			_context = context;
 		}
 
-		// LOGIN GET
+		
 		[HttpGet]
 		public IActionResult Login(string? returnUrl = null)
 		{
@@ -40,7 +40,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// LOGIN POST
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)

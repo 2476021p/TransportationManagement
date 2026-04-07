@@ -122,7 +122,7 @@ namespace TransportationManagement.Controllers
 
 				if (savedDriver != null)
 				{
-					savedDriver.UserId = user.Id;
+					savedDriver.userId = user.Id;
 					await _driverService.UpdateDriverAsync(savedDriver);
 				}
 
@@ -198,9 +198,9 @@ namespace TransportationManagement.Controllers
 			}
 
 			// Delete Identity user account
-			if (driver.UserId != null)
+			if (driver.userId != null)
 			{
-				var user = await _userManager.FindByIdAsync(driver.UserId);
+				var user = await _userManager.FindByIdAsync(driver.userId);
 				if (user != null)
 					await _userManager.DeleteAsync(user);
 			}

@@ -1,7 +1,5 @@
-
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace TransportationManagement.Models
 {
@@ -12,34 +10,41 @@ namespace TransportationManagement.Models
 		INACTIVE
 	}
 
-	[Index(nameof(licenseNumber), IsUnique = true)]
-	[Index(nameof(contactNumber), IsUnique = true)]
 	public class Driver
 	{
 		[Key]
 		public int driverId { get; set; }
 
-		[Required]
+		// Driver Name
+		[Required(ErrorMessage = "Driver name is required")]
 		[StringLength(100)]
 		public string name { get; set; } = string.Empty;
 
-		[Required]
-		[StringLength(50)]
+		// License Number (Unique)
+		[Required(ErrorMessage = "License number is required")]
+		[StringLength(20)]
+		[RegularExpression(@"^[A-Za-z0-9]+$", ErrorMessage = "Only letters and numbers allowed")]
 		public string licenseNumber { get; set; } = string.Empty;
 
-		[Required]
-		[StringLength(20)]
+		// Contact Number (FIXED)
+		[Required(ErrorMessage = "Contact number is required")]
+		[MaxLength(15)]
+		[RegularExpression(@"^\+?\d{10,15}$", ErrorMessage = "Enter valid contact number")]
 		public string contactNumber { get; set; } = string.Empty;
 
-		// REMOVE [Required] from status - enum has default value
+		// Status
+		[Required]
 		public DriverStatus status { get; set; } = DriverStatus.AVAILABLE;
 
-		public string? UserId { get; set; }
+		// Optional: link with Identity user
+		public string? userId { get; set; }
 
-		// MAKE User nullable with ?
+		[ForeignKey("userId")]
 		public ApplicationUser? User { get; set; }
 
-		// Navigation properties
-		public ICollection<Trip> Trips { get; set; } = new List<Trip>();
+		public ICollection<Trip>? Trips { get; set; }
+		public ICollection<MaintenanceRecord>? MaintenanceRecords { get; set; }
+		public ICollection<FuelEntry>? FuelEntries { get; set; }
+
 	}
 }

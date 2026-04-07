@@ -3,26 +3,37 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TransportationManagement.Models
 {
-    public class MaintenanceRecord
-    {
-        [Key]
-        public int maintenanceId { get; set; }
+	public enum MaintenanceStatus
+	{
+		SCHEDULED,
+		IN_SERVICE,
+		COMPLETED
+	}
 
-        [Required]
-        public int vehicleId { get; set; }
+	public class MaintenanceRecord
+	{
+		[Key]
+		public int maintenanceId { get; set; }
 
-        [Required]
-        [StringLength(100)]
-        public string serviceType { get; set; } = string.Empty;
+		[Required]
+		public int vehicleId { get; set; }
 
-        [Required]
-        public DateTime serviceDate { get; set; }
+		[Required]
+		[StringLength(100)]
+		public string serviceType { get; set; } = string.Empty;
 
-        [StringLength(255)]
-        public string? remarks { get; set; }
+		[Required]
+		public DateTime serviceDate { get; set; }
 
-        // Navigation property
-        [ForeignKey("vehicleId")]
-        public Vehicle? Vehicle { get; set; }
-    }
+		[StringLength(255)]
+		public string? remarks { get; set; }
+
+		// ADD THIS - Status field
+		public MaintenanceStatus status { get; set; }
+			= MaintenanceStatus.SCHEDULED;
+
+		// Navigation property
+		[ForeignKey("vehicleId")]
+		public Vehicle? Vehicle { get; set; }
+	}
 }

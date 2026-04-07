@@ -1,38 +1,97 @@
 @model TransportationManagement.Models.MaintenanceRecord
-@{ ViewData["Title"] = "Schedule Maintenance"; }
+@{
+    ViewData["Title"] = "Schedule Maintenance";
+}
+ 
 <div class="page-header">
-    <h2><i class="fas fa-calendar-check"></i> Schedule Maintenance</h2>
-    <a asp-action="Index" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+    <h2>
+        <i class="fas fa-calendar-check"></i>
+        Schedule Maintenance
+    </h2>
+    <a asp-action="Index" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
 </div>
+ 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+ 
 <div class="card form-card">
     <form asp-action="ScheduleMaintenance" method="post">
-        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <div asp-validation-summary="ModelOnly"
+             class="validation-summary"></div>
+ 
         <div class="form-row">
+            <!-- Vehicle Dropdown - only ACTIVE vehicles -->
             <div class="form-group col-6">
                 <label asp-for="vehicleId">Vehicle</label>
-                <select asp-for="vehicleId" asp-items="ViewBag.Vehicles" class="form-control"><option value="">-- Select Vehicle --</option></select>
-                <span asp-validation-for="vehicleId" class="field-error"></span>
+                <select asp-for="vehicleId"
+                        asp-items="ViewBag.Vehicles"
+                        class="form-control">
+                    <option value="">-- Select Vehicle --</option>
+                </select>
+                <span asp-validation-for="vehicleId"
+                      class="field-error"></span>
+                <small class="text-muted">
+                    Only available vehicles shown
+                </small>
             </div>
+ 
+            <!-- Service Type -->
             <div class="form-group col-6">
                 <label asp-for="serviceType">Service Type</label>
-                <input asp-for="serviceType" class="form-control" placeholder="e.g. Oil Change, Tyre Rotation" />
-                <span asp-validation-for="serviceType" class="field-error"></span>
+                <input asp-for="serviceType"
+                       class="form-control"
+                       placeholder="e.g. Oil Change, Tyre Rotation" />
+                <span asp-validation-for="serviceType"
+                      class="field-error"></span>
             </div>
         </div>
+ 
         <div class="form-row">
+            <!-- Service Date -->
             <div class="form-group col-6">
                 <label asp-for="serviceDate">Service Date</label>
-                <input asp-for="serviceDate" type="date" class="form-control" />
-                <span asp-validation-for="serviceDate" class="field-error"></span>
+                <input asp-for="serviceDate"
+                       type="date"
+                       class="form-control" />
+                <span asp-validation-for="serviceDate"
+                      class="field-error"></span>
             </div>
+ 
+            <!-- Status Dropdown -->
             <div class="form-group col-6">
-                <label asp-for="remarks">Remarks</label>
-                <input asp-for="remarks" class="form-control" placeholder="Optional notes" />
+                <label asp-for="status">Status</label>
+                <select asp-for="status"
+                        class="form-control"
+                        asp-items="Html.GetEnumSelectList
+                                                                    <TransportationManagement.Models
+                                                                    .MaintenanceStatus>()">
+</select>
             </div>
         </div>
+ 
+        <div class="form-row">
+            <!-- Remarks -->
+            <div class="form-group col-6">
+                <label asp-for="remarks">Remarks</label>
+                <input asp-for="remarks"
+                       class="form-control"
+                       placeholder="Optional notes" />
+            </div>
+        </div>
+ 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Schedule</button>
-            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Schedule
+            </button>
+            <a asp-action="Index"
+               class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>
+ 

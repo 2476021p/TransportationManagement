@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TransportationManagement.Data;
 
@@ -11,9 +12,11 @@ using TransportationManagement.Data;
 namespace TransportationManagement.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406102142_vehicle")]
+    partial class vehicle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -235,18 +238,21 @@ namespace TransportationManagement.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("driverId"));
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId1")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("contactNumber")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
-
-                    b.Property<int?>("driverId1")
-                        .HasColumnType("int");
-
-                    b.Property<string>("licenseNumber")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("licenseNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("name")
                         .IsRequired()
@@ -256,14 +262,15 @@ namespace TransportationManagement.Migrations
                     b.Property<int>("status")
                         .HasColumnType("int");
 
-                    b.Property<string>("userId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("driverId");
 
-                    b.HasIndex("driverId1");
+                    b.HasIndex("UserId1");
 
-                    b.HasIndex("userId");
+                    b.HasIndex("contactNumber")
+                        .IsUnique();
+
+                    b.HasIndex("licenseNumber")
+                        .IsUnique();
 
                     b.ToTable("Drivers");
                 });
@@ -275,9 +282,6 @@ namespace TransportationManagement.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("fuelId"));
-
-                    b.Property<int?>("driverId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("entryDate")
                         .HasColumnType("datetime2");
@@ -296,8 +300,6 @@ namespace TransportationManagement.Migrations
 
                     b.HasKey("fuelId");
 
-                    b.HasIndex("driverId");
-
                     b.HasIndex("vehicleId");
 
                     b.ToTable("FuelEntries");
@@ -310,9 +312,6 @@ namespace TransportationManagement.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("maintenanceId"));
-
-                    b.Property<int?>("driverId")
-                        .HasColumnType("int");
 
                     b.Property<string>("remarks")
                         .HasMaxLength(255)
@@ -333,8 +332,6 @@ namespace TransportationManagement.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("maintenanceId");
-
-                    b.HasIndex("driverId");
 
                     b.HasIndex("vehicleId");
 
@@ -467,23 +464,15 @@ namespace TransportationManagement.Migrations
 
             modelBuilder.Entity("TransportationManagement.Models.Driver", b =>
                 {
-                    b.HasOne("TransportationManagement.Models.Driver", null)
-                        .WithMany("Drivers")
-                        .HasForeignKey("driverId1");
-
                     b.HasOne("TransportationManagement.Models.ApplicationUser", "User")
                         .WithMany()
-                        .HasForeignKey("userId");
+                        .HasForeignKey("UserId1");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("TransportationManagement.Models.FuelEntry", b =>
                 {
-                    b.HasOne("TransportationManagement.Models.Driver", null)
-                        .WithMany("FuelEntries")
-                        .HasForeignKey("driverId");
-
                     b.HasOne("TransportationManagement.Models.Vehicle", "Vehicle")
                         .WithMany("FuelEntries")
                         .HasForeignKey("vehicleId")
@@ -495,10 +484,6 @@ namespace TransportationManagement.Migrations
 
             modelBuilder.Entity("TransportationManagement.Models.MaintenanceRecord", b =>
                 {
-                    b.HasOne("TransportationManagement.Models.Driver", null)
-                        .WithMany("MaintenanceRecords")
-                        .HasForeignKey("driverId");
-
                     b.HasOne("TransportationManagement.Models.Vehicle", "Vehicle")
                         .WithMany("MaintenanceRecords")
                         .HasForeignKey("vehicleId")
@@ -528,12 +513,6 @@ namespace TransportationManagement.Migrations
 
             modelBuilder.Entity("TransportationManagement.Models.Driver", b =>
                 {
-                    b.Navigation("Drivers");
-
-                    b.Navigation("FuelEntries");
-
-                    b.Navigation("MaintenanceRecords");
-
                     b.Navigation("Trips");
                 });
 

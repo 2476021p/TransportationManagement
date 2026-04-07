@@ -38,6 +38,7 @@ namespace TransportationManagement.Controllers
 			return View(model);
 		}
 
+		[Authorize(Roles = "Admin")]
 
 		// ================= USERS =================
 		public async Task<IActionResult> Users()
@@ -72,7 +73,7 @@ namespace TransportationManagement.Controllers
 	{
 		new SelectListItem { Value = "Admin", Text = "Admin" },
 		new SelectListItem { Value = "FleetManager", Text = "Fleet Manager" },
-		new SelectListItem { Value = "Driver", Text = "Driver" },
+		//new SelectListItem { Value = "Driver", Text = "Driver" },
 		new SelectListItem { Value = "MaintenanceEngineer", Text = "Maintenance Engineer" }
 	};
 
@@ -246,7 +247,7 @@ namespace TransportationManagement.Controllers
 			await _userManager.AddToRoleAsync(user, "Driver");
 
 			// Link Driver with User
-			driver.UserId = user.Id;
+			driver.userId = user.Id;
 			_context.Update(driver);
 			await _context.SaveChangesAsync();
 

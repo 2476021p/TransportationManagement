@@ -55,7 +55,7 @@ namespace TransportationManagement.Controllers
 				{
 					// Find driver by UserId
 					var driver = await _context.Drivers
-						.FirstOrDefaultAsync(d => d.UserId == user.Id);
+						.FirstOrDefaultAsync(d => d.userId == user.Id);
 
 					if (driver != null)
 					{
@@ -84,7 +84,7 @@ namespace TransportationManagement.Controllers
 				if (await _userManager.IsInRoleAsync(user, "FleetManager"))
 				{
 					HttpContext.Session.SetString("Role", "FleetManager");
-					return RedirectToAction("Dashboard", "FleetManager");
+					return RedirectToAction("Dashboard", "Admin");
 				}
 
 				// ==== MAINTENANCE ====

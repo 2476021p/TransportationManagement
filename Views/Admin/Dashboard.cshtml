@@ -10,7 +10,7 @@
             <h3>@Model.TotalVehicles</h3>
             <p>Total Vehicles</p>
         </div>
-        <a asp-action="Vehicles" class="stat-link">View All</a>
+        <a asp-controller="Vehicle" asp-action="Index" class="stat-link">View All</a>
     </div>
     <div class="stat-card stat-green">
         @* <div class="stat-icon"><i class="fas fa-id-card"></i></div> *@
@@ -18,7 +18,7 @@
             <h3>@Model.TotalDrivers</h3>
             <p>Total Drivers</p>
         </div>
-        <a asp-action="Drivers" class="stat-link">View All</a>
+        <a asp-controller="Driver" asp-action="Index" class="stat-link">View All</a>
     </div>
     <div class="stat-card stat-orange">
         @* <div class="stat-icon"><i class="fas fa-route"></i></div> *@
@@ -26,7 +26,7 @@
             <h3>@Model.TotalTrips</h3>
             <p>Total Trips</p>
         </div>
-        <a asp-action="Trips" class="stat-link">View All</a>
+        <a asp-controller="Trip" asp-action="Index" class="stat-link">View All</a>
     </div>
     <div class="stat-card stat-red">
         @* <div class="stat-icon"><i class="fas fa-wrench"></i></div> *@
@@ -34,7 +34,7 @@
             <h3>@Model.TotalMaintenanceRecords</h3>
             <p>Maintenance Records</p>
         </div>
-        <a asp-action="Maintenance" class="stat-link">View All</a>
+        <a  asp-controller="Maintenance" asp-action="Index" class="stat-link">View All</a>
     </div>
     <div class="stat-card stat-purple">
         @* <div class="stat-icon"><i class="fas fa-gas-pump"></i></div> *@
@@ -42,16 +42,20 @@
             <h3>@Model.TotalFuelEntries</h3>
             <p>Fuel Entries</p>
         </div>
-        <a asp-action="Fuel" class="stat-link">View All</a>
+        <a asp-controller="Fuel" asp-action="Index" class="stat-link">View All</a>
     </div>
-    <div class="stat-card stat-teal">
-        @* <div class="stat-icon"><i class="fas fa-users"></i></div> *@
-        <div class="stat-info">
-            <h3>@Model.TotalUsers</h3>
-            <p>System Users</p>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="stat-card stat-teal">
+            @* <div class="stat-icon"><i class="fas fa-users"></i></div> *@
+            <div class="stat-info">
+                <h3>@Model.TotalUsers</h3>
+                <p>System Users</p>
+            </div>
+            <a asp-controller="Admin" asp-action="Users" class="stat-link">View All</a>
         </div>
-        <a asp-action="Users" class="stat-link">View All</a>
-    </div>
+    }
 </div>
 
 <div class="dashboard-tables">

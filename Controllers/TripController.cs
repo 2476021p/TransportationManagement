@@ -179,8 +179,7 @@ namespace TransportationManagement.Controllers
 			var drivers = await _context.Drivers
 				.ToListAsync();
 
-			// All vehicles - not filtered by status
-			// Validation happens in POST not in dropdown
+			
 			var vehicles = await _context.Vehicles
 				.ToListAsync();
 

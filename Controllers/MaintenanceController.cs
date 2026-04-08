@@ -71,7 +71,7 @@ namespace TransportationManagement.Controllers
 
 					if (vehicleData != null && vehicleData.status == VehicleStatus.IN_SERVICE)
 					{
-						TempData["Error"] = "Vehicle a";
+						TempData["Error"] = "Vehicle is already on maintainance cant schedule trip";
 						await PopulateVehicles();
 						return View(record);
 					}
@@ -96,7 +96,7 @@ namespace TransportationManagement.Controllers
 					bool alreadyScheduled = await _context.MaintenanceRecords
 						.AnyAsync(m =>
 							m.vehicleId == record.vehicleId &&
-							m.status != MaintenanceStatus.SCHEDULED);
+							m.status != MaintenanceStatus.COMPLETED);
 
 					if (alreadyScheduled)
 					{
@@ -139,6 +139,15 @@ namespace TransportationManagement.Controllers
 			try
 			{
 				var record = await _maintenanceService.GetMaintenanceByIdAsync(id);
+				if (record == null)
+					return NotFound();
+
+				if (record.status == MaintenanceStatus.COMPLETED)
+				{
+					TempData["Error"] = "Completed maintenance cannot be edited.";
+					return RedirectToAction(nameof(Index));
+				}
+
 				if (record == null) return NotFound();
 				await PopulateVehicles();
 				return View(record);
@@ -157,24 +166,47 @@ namespace TransportationManagement.Controllers
 		{
 			try
 			{
+				// 🔹 Get existing record (tracked by EF)
+				var existingRecord = await _context.MaintenanceRecords
+					.FirstOrDefaultAsync(m => m.maintenanceId == id);
+
+				if (existingRecord == null)
+					return NotFound();
+
+				// ❌ Block if already completed
+				if (existingRecord.status == MaintenanceStatus.COMPLETED)
+				{
+					TempData["Error"] = "Completed maintenance cannot be updated.";
+					return RedirectToAction(nameof(Index));
+				}
+
 				ModelState.Remove("Vehicle");
 
-				if (id != record.maintenanceId) return NotFound();
+				if (id != record.maintenanceId)
+					return NotFound();
+
 				if (ModelState.IsValid)
 				{
-					await _maintenanceService.UpdateServiceRecordAsync(record);
+					// ✅ UPDATE existing record (NO tracking issue)
+					existingRecord.serviceType = record.serviceType;
+					existingRecord.serviceDate = record.serviceDate;
+					existingRecord.remarks = record.remarks;
+					existingRecord.status = record.status;
 
-					// If completed - set vehicle back to ACTIVE
+					// 🔥 If maintenance completed → set vehicle ACTIVE
 					if (record.status == MaintenanceStatus.COMPLETED)
 					{
 						var vehicle = await _context.Vehicles
-							.FindAsync(record.vehicleId);
+							.FirstOrDefaultAsync(v => v.vehicleId == record.vehicleId);
+
 						if (vehicle != null)
 						{
 							vehicle.status = VehicleStatus.ACTIVE;
-							await _context.SaveChangesAsync();
 						}
 					}
+
+					// 💾 SAVE ALL CHANGES ONCE
+					await _context.SaveChangesAsync();
 
 					TempData["Success"] = "Service record updated successfully.";
 					return RedirectToAction(nameof(Index));
@@ -190,6 +222,7 @@ namespace TransportationManagement.Controllers
 				return View(record);
 			}
 		}
+
 
 		// GET: Maintenance/GetMaintenanceHistory/5
 		public async Task<IActionResult> GetMaintenanceHistory(int vehicleId)
@@ -214,12 +247,22 @@ namespace TransportationManagement.Controllers
 			try
 			{
 				var record = await _maintenanceService.GetMaintenanceByIdAsync(id);
-				if (record == null) return NotFound();
+
+				if (record == null)
+					return NotFound();
+
+				// 🔒 BLOCK IF COMPLETED
+				if (record.status == MaintenanceStatus.COMPLETED)
+				{
+					TempData["Error"] = "Completed maintenance cannot be deleted.";
+					return RedirectToAction(nameof(Index));
+				}
+
 				return View(record);
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while loading the delete page: " + ex.Message;
+				TempData["Error"] = ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
@@ -232,27 +275,29 @@ namespace TransportationManagement.Controllers
 			try
 			{
 				var record = await _maintenanceService.GetMaintenanceByIdAsync(id);
-				if (record != null)
+
+				if (record == null)
+					return NotFound();
+
+				// 🔒 BLOCK IF COMPLETED
+				if (record.status == MaintenanceStatus.COMPLETED)
 				{
-					var vehicle = await _context.Vehicles
-						.FindAsync(record.vehicleId);
-					if (vehicle != null)
-					{
-						vehicle.status = VehicleStatus.ACTIVE;
-						await _context.SaveChangesAsync();
-					}
+					TempData["Error"] = "Completed maintenance cannot be deleted.";
+					return RedirectToAction(nameof(Index));
 				}
 
 				await _maintenanceService.DeleteMaintenanceAsync(id);
-				TempData["Success"] = "Maintenance record deleted.";
+
+				TempData["Success"] = "Maintenance deleted successfully!";
 				return RedirectToAction(nameof(Index));
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while deleting the maintenance record: " + ex.Message;
+				TempData["Error"] = ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
+
 
 		// KEY FIX - Show ALL vehicles in dropdown
 		private async Task PopulateVehicles()

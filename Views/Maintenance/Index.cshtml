@@ -7,7 +7,7 @@
 <div class="card">
     <div class="table-search"><input type="text" id="searchInput" class="form-control" placeholder="Search records..." onkeyup="searchTable()" /></div>
     <table class="table table-hover" id="mainTable">
-        <thead><tr><th>#</th><th>Vehicle</th><th>Service Type</th><th>Service Date</th><th>Remarks</th><th>Actions</th></tr></thead>
+        <thead><tr><th>S.No</th><th>Vehicle</th><th>Service Type</th><th>Service Date</th><th>Remarks</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
         @{ int i=1; }
         @foreach(var m in Model){
@@ -17,6 +17,10 @@
                 <td>@m.serviceType</td>
                 <td>@m.serviceDate.ToString("dd MMM yyyy")</td>
                 <td>@(m.remarks ?? "-")</td>
+                    <td>
+                        <span class="badge badge-@(m.status == MaintenanceStatus.COMPLETED ? "success" : m.status == MaintenanceStatus.IN_SERVICE ? "warning" : "info")">@m.status</span>
+                    </td>
+                
                 <td class="action-btns">
                     <a asp-action="UpdateServiceRecord" asp-route-id="@m.maintenanceId" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
                     <a asp-action="Delete" asp-route-id="@m.maintenanceId" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>

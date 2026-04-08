@@ -39,6 +39,7 @@ namespace TransportationManagement.Models
 		// Optional: link with Identity user
 		public string? userId { get; set; }
 
+
 		[ForeignKey("userId")]
 		public ApplicationUser? User { get; set; }
 

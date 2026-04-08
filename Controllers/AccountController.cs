@@ -63,23 +63,43 @@ namespace TransportationManagement.Controllers
 					// ==== DRIVER ====
 					if (await _userManager.IsInRoleAsync(user, "Driver"))
 					{
-						// Find driver by UserId
+						// Find driver by userId
 						var driver = await _context.Drivers
 							.FirstOrDefaultAsync(d => d.userId == user.Id);
 
+						// If userId not linked yet, find by most recent unlinked driver
+						if (driver == null)
+						{
+							driver = await _context.Drivers
+								.Where(d => d.userId == null || d.userId == "")
+								.OrderByDescending(d => d.driverId)
+								.FirstOrDefaultAsync();
+
+							if (driver != null)
+							{
+								// Link now
+								driver.userId = user.Id;
+								_context.Drivers.Update(driver);
+								await _context.SaveChangesAsync();
+							}
+						}
+
 						if (driver != null)
 						{
-							HttpContext.Session.SetString("DriverId", driver.driverId.ToString());
+							HttpContext.Session.SetString("DriverId",
+								driver.driverId.ToString());
 							HttpContext.Session.SetString("Role", "Driver");
 							return RedirectToAction("Dashboard", "Driver");
 						}
 						else
 						{
-							// Driver record not linked yet - show error
-							ModelState.AddModelError("", "Driver profile not found. Contact admin.");
+							await _signInManager.SignOutAsync();
+							ModelState.AddModelError("",
+								"Driver profile not found. Contact admin.");
 							return View(model);
 						}
 					}
+
 
 					// ==== ADMIN ====
 					if (await _userManager.IsInRoleAsync(user, "Admin"))

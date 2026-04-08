@@ -66,6 +66,16 @@ namespace TransportationManagement.Controllers
 
 				if (ModelState.IsValid)
 				{
+					// 🔴 CHECK 0 - Vehicle already IN MAINTENANCE
+					var vehicleData = await _context.Vehicles.FindAsync(record.vehicleId);
+
+					if (vehicleData != null && vehicleData.status == VehicleStatus.IN_SERVICE)
+					{
+						TempData["Error"] = "Vehicle already under maintenance";
+						await PopulateVehicles();
+						return View(record);
+					}
+
 					// CHECK 1 - Vehicle on a trip?
 					bool onTrip = await _context.Trips
 						.AnyAsync(t =>
@@ -85,7 +95,7 @@ namespace TransportationManagement.Controllers
 					bool alreadyScheduled = await _context.MaintenanceRecords
 						.AnyAsync(m =>
 							m.vehicleId == record.vehicleId &&
-							m.status == MaintenanceStatus.SCHEDULED);
+							m.status != MaintenanceStatus.SCHEDULED);
 
 					if (alreadyScheduled)
 					{

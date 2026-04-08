@@ -97,7 +97,33 @@ namespace TransportationManagement.Controllers
 				{
 					ModelState.AddModelError("vehicleId", "Vehicle is under maintenance. Cannot assign to trip.");
 				}
+				else if (vehicle.status == VehicleStatus.IN_SERVICE)
+				{
+					ModelState.AddModelError("vehicleId", "Vehicle is already on another trip.");
+				}
 
+				
+				var driver = await _context.Drivers
+					.FirstOrDefaultAsync(d => d.driverId == trip.driverId);
+
+				if (driver == null)
+				{
+					ModelState.AddModelError("driverId", "Selected driver not found.");
+				}
+				else if (driver.status != DriverStatus.AVAILABLE)
+				{
+					ModelState.AddModelError("driverId", "Driver is not available (already on trip).");
+				}
+
+			
+				bool driverBusy = await _context.Trips
+					.AnyAsync(t => t.driverId == trip.driverId &&
+								   t.tripStatus == TripStatus.IN_PROGRESS);
+
+				if (driverBusy)
+				{
+					ModelState.AddModelError("driverId", "Driver already assigned to another trip.");
+				}
 				if (!ModelState.IsValid)
 				{
 					await PopulateDropdowns();
@@ -230,11 +256,7 @@ namespace TransportationManagement.Controllers
 					return NotFound();
 
 			
-				existingTrip.vehicleId = trip.vehicleId;
-				existingTrip.driverId = trip.driverId;
-				existingTrip.origin = trip.origin;
-				existingTrip.destination = trip.destination;
-				existingTrip.plannedRoute = trip.plannedRoute;
+				
 				existingTrip.tripStatus = trip.tripStatus;
 
 

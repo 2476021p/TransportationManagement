@@ -2,7 +2,12 @@
 @{ ViewData["Title"] = "Maintenance"; }
 <div class="page-header">
     <h2><i class="fas fa-wrench"></i> Maintenance Scheduling</h2>
-    <a asp-action="ScheduleMaintenance" class="btn btn-primary"><i class="fas fa-plus"></i> Schedule Maintenance</a>
+    @if (User.IsInRole("FleetManager"))
+    {
+        <a asp-action="ScheduleMaintenance" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Schedule Maintenance
+        </a>
+    }
 </div>
 <div class="card">
     <div class="table-search"><input type="text" id="searchInput" class="form-control" placeholder="Search records..." onkeyup="searchTable()" /></div>
@@ -22,8 +27,11 @@
                     </td>
                 
                 <td class="action-btns">
+                        @if (User.IsInRole("FleetManager") || User.IsInRole("Maintainance"))
+                        {
                     <a asp-action="UpdateServiceRecord" asp-route-id="@m.maintenanceId" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
                     <a asp-action="Delete" asp-route-id="@m.maintenanceId" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                        }
                 </td>
             </tr>
         }

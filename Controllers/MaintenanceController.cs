@@ -71,7 +71,7 @@ namespace TransportationManagement.Controllers
 
 					if (vehicleData != null && vehicleData.status == VehicleStatus.IN_SERVICE)
 					{
-						TempData["Error"] = "Vehicle is on trip cannot schedule maintainance";
+						TempData["Error"] = "Vehicle a";
 						await PopulateVehicles();
 						return View(record);
 					}

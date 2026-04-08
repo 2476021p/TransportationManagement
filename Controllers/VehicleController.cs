@@ -176,40 +176,60 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
+
 		// ✅ POST: Vehicle/Delete/5 - Actual delete
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			try
 			{
-				bool isAssigned = await _vehicleService.IsVehicleAssignedAsync(id);
-				if (isAssigned)
-				{
-					TempData["Error"] = "Vehicle is on a trip. Cannot delete!";
+				var hasTrips = await _context.Trips.AnyAsync(t => t.vehicleId == id);
+				if (hasTrips)
 					return RedirectToAction(nameof(Index));
-				}
 
-				// Also check active maintenance
-				var activeMaintenance = await _context.MaintenanceRecords
-					.AnyAsync(m => m.vehicleId == id &&
-								   m.status == MaintenanceStatus.SCHEDULED);
-				if (activeMaintenance)
-				{
-					TempData["Error"] =
-						"Vehicle has scheduled maintenance. Cannot delete!";
+				var hasMaintenance = await _context.MaintenanceRecords.AnyAsync(m => m.vehicleId == id);
+				if (hasMaintenance)
 					return RedirectToAction(nameof(Index));
-				}
 
 				await _vehicleService.DeleteVehicleAsync(id);
-				TempData["Success"] = "Vehicle deleted successfully.";
 				return RedirectToAction(nameof(Index));
 			}
-			catch (Exception ex)
+			catch (Exception)
 			{
-				TempData["Error"] = "Error deleting vehicle: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
+		}
+
+
+		[HttpGet]
+		[Authorize(Roles = "Admin,FleetManager")]
+		public async Task<IActionResult> GetVehicleDetails(int id)
+		{
+			var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.vehicleId == id);
+
+			if (vehicle == null)
+				return NotFound();
+
+			return View(vehicle);
+		}
+
+		[HttpPost]
+		public async Task<IActionResult> UpdateStatus(int id, VehicleStatus status)
+		{
+			var vehicle = await _context.Vehicles.FindAsync(id);
+
+			if (vehicle == null)
+			{
+				return RedirectToAction("Index");
+			}
+
+			vehicle.status = status;
+
+			await _context.SaveChangesAsync();
+
+			return RedirectToAction("Index");
 		}
 	}
 }

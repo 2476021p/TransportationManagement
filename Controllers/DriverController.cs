@@ -46,7 +46,7 @@ namespace TransportationManagement.Controllers
 		}
 
 		
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public IActionResult Create()
 		{
 			try
@@ -63,7 +63,7 @@ namespace TransportationManagement.Controllers
 		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> Create(Driver driver, string email, string password)
 		{
 			try
@@ -159,7 +159,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> Edit(int id)
 		{
 			try
@@ -176,7 +176,7 @@ namespace TransportationManagement.Controllers
 		}
 
 		[HttpPost]
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> Edit(Driver driver)
 		{
 			try
@@ -197,7 +197,7 @@ namespace TransportationManagement.Controllers
 
 		
 		[HttpPost]
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Delete(int id)
 		{
@@ -311,7 +311,7 @@ namespace TransportationManagement.Controllers
 		}
 
 		[HttpGet]
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> GetAssignedTrips(int id)
 		{
 			try
@@ -329,6 +329,18 @@ namespace TransportationManagement.Controllers
 				TempData["Error"] = "Error loading assigned trips: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
+		}
+
+		[HttpGet]
+		[Authorize(Roles = "Admin,FleetManager")]
+		public async Task<IActionResult> GetDriverDetails(int id)
+		{
+			var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.driverId == id);
+
+			if (driver == null)
+				return NotFound();
+
+			return View(driver);
 		}
 
 

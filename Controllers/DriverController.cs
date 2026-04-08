@@ -182,7 +182,7 @@ namespace TransportationManagement.Controllers
 			try
 			{
 				if (!ModelState.IsValid)
-					return View("~/Views/Driver/AddDriver.cshtml", driver);
+					return View(driver);
 
 				_context.Update(driver);
 				await _context.SaveChangesAsync();
@@ -191,7 +191,7 @@ namespace TransportationManagement.Controllers
 			catch (Exception ex)
 			{
 				TempData["Error"] = "An error occurred while updating the driver: " + ex.Message;
-				return View("~/Views/Driver/AddDriver.cshtml", driver);
+				return View(driver);
 			}
 		}
 
@@ -310,6 +310,27 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		
+		[HttpGet]
+		[Authorize(Roles = "Admin,FleetManager")]
+		public async Task<IActionResult> GetAssignedTrips(int id)
+		{
+			try
+			{
+				var trips = await _context.Trips
+					.Include(t => t.Vehicle)
+					.Include(t => t.Driver)
+					.Where(t => t.driverId == id)
+					.ToListAsync();
+
+				return View(trips);
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "Error loading assigned trips: " + ex.Message;
+				return RedirectToAction(nameof(Index));
+			}
+		}
+
+
 	}
 }

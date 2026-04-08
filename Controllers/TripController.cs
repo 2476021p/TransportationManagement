@@ -99,7 +99,15 @@ namespace TransportationManagement.Controllers
 				}
 				else if (vehicle.status == VehicleStatus.IN_SERVICE)
 				{
-					ModelState.AddModelError("vehicleId", "Vehicle is already on another trip.");
+					bool isUnderMaintenance = await _context.MaintenanceRecords
+	                .AnyAsync(m => m.vehicleId == trip.vehicleId &&
+				    m.status != MaintenanceStatus.COMPLETED);
+
+					if (isUnderMaintenance)
+					{
+						ModelState.AddModelError("VehicleId",
+							"Vehicle is under maintenance. Cannot assign trip.");
+					}
 				}
 
 				

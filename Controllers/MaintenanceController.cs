@@ -71,7 +71,7 @@ namespace TransportationManagement.Controllers
 
 					if (vehicleData != null && vehicleData.status == VehicleStatus.IN_SERVICE)
 					{
-						TempData["Error"] = "Vehicle already under maintenance";
+						TempData["Error"] = "Vehicle is on trip cannot schedule maintainance";
 						await PopulateVehicles();
 						return View(record);
 					}
@@ -84,6 +84,7 @@ namespace TransportationManagement.Controllers
 
 					if (onTrip)
 					{
+
 						TempData["Error"] =
 							"Cannot schedule maintenance. " +
 							"Vehicle is currently on a trip!";
@@ -110,14 +111,13 @@ namespace TransportationManagement.Controllers
 					await _maintenanceService.ScheduleMaintenanceAsync(record);
 
 					// Update vehicle status to IN_SERVICE
-					var vehicle = await _context.Vehicles
-						.FindAsync(record.vehicleId);
+					var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.vehicleId == record.vehicleId);
+
 					if (vehicle != null)
 					{
 						vehicle.status = VehicleStatus.IN_SERVICE;
 						await _context.SaveChangesAsync();
 					}
-
 					TempData["Success"] = "Maintenance scheduled successfully!";
 					return RedirectToAction(nameof(Index));
 				}

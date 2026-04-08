@@ -53,20 +53,15 @@ namespace TransportationManagement.Controllers
 		}
 
 		// GET: Vehicle/Create
-		public IActionResult Create()
+		// GET: Vehicle/AddVehicle
+		[HttpGet]
+		public IActionResult AddVehicle()
 		{
-			try
-			{
-				return View();
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "Error loading create page: " + ex.Message;
-				return RedirectToAction(nameof(Index));
-			}
+			return View(); // will open AddVehicle.cshtml
 		}
 
-		// POST: Vehicle/Create
+
+		// POST: Vehicle/AddVehicle
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> AddVehicle(Vehicle vehicle)
@@ -77,30 +72,21 @@ namespace TransportationManagement.Controllers
 				{
 					// Check duplicate vehicle number
 					var existingVehicle = await _context.Vehicles
-						.FirstOrDefaultAsync(v =>
-							v.vehicleNumber == vehicle.vehicleNumber);
+						.FirstOrDefaultAsync(v => v.vehicleNumber == vehicle.vehicleNumber);
+
 					if (existingVehicle != null)
 					{
-						TempData["Error"] =
-							$"Vehicle number '{vehicle.vehicleNumber}' already exists!";
+						TempData["Error"] = $"Vehicle number '{vehicle.vehicleNumber}' already exists!";
 						return View(vehicle);
 					}
 
-					// Check duplicate registration number
-					var existingReg = await _context.Vehicles
-						.FirstOrDefaultAsync(v =>
-							v.vehicleNumber == vehicle.vehicleNumber);
-					if (existingReg != null)
-					{
-						TempData["Error"] =
-							$"Registration '{vehicle.vehicleNumber}' already exists!";
-						return View(vehicle);
-					}
-
+					// Save vehicle
 					await _vehicleService.AddVehicleAsync(vehicle);
-					TempData["Success"] = "Vehicle added successfully.";
+
+					TempData["Success"] = "Vehicle added successfully!";
 					return RedirectToAction(nameof(Index));
 				}
+
 				return View(vehicle);
 			}
 			catch (Exception ex)

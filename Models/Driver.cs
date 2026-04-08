@@ -28,7 +28,7 @@ namespace TransportationManagement.Models
 
 		// Contact Number (FIXED)
 		[Required(ErrorMessage = "Contact number is required")]
-		[MaxLength(15)]
+		[MaxLength(10)]
 		[RegularExpression(@"^\+?\d{10,15}$", ErrorMessage = "Enter valid contact number")]
 		public string contactNumber { get; set; } = string.Empty;
 

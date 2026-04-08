@@ -27,7 +27,7 @@
                     </td>
                 
                 <td class="action-btns">
-                        @if (User.IsInRole("FleetManager") || User.IsInRole("Maintainance"))
+                        @if (User.IsInRole("FleetManager") || User.IsInRole("MaintenanceEngineer"))
                         {
                     <a asp-action="UpdateServiceRecord" asp-route-id="@m.maintenanceId" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
                     <a asp-action="Delete" asp-route-id="@m.maintenanceId" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>

@@ -11,7 +11,10 @@
     <div class="detail-row"><span class="detail-label">Capacity</span><span class="detail-value">@Model.capacity</span></div>
     <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-@(Model.status==VehicleStatus.ACTIVE?"success":Model.status==VehicleStatus.IN_SERVICE?"warning":"danger")">@Model.status</span></span></div>
     <div class="form-actions">
-        <a asp-action="UpdateVehicle" asp-route-id="@Model.vehicleId" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
-        <a asp-action="Delete" asp-route-id="@Model.vehicleId" class="btn btn-danger"><i class="fas fa-trash"></i> Delete</a>
+        @if (User.IsInRole("FleetManager"))
+        {
+            <a asp-action="UpdateVehicle" asp-route-id="@Model.vehicleId" class="btn btn-warning"><i class="fas fa-edit"></i> Edit</a>
+            <a asp-action="Delete" asp-route-id="@Model.vehicleId" class="btn btn-danger"><i class="fas fa-trash"></i> Delete</a>
+        }
     </div>
 </div>

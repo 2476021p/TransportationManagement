@@ -25,7 +25,7 @@ namespace TransportationManagement.Controllers
 			_context = context;
 		}
 
-		// GET: Maintenance
+		
 		public async Task<IActionResult> Index()
 		{
 			try
@@ -40,7 +40,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Maintenance/ScheduleMaintenance
+	
 		public async Task<IActionResult> ScheduleMaintenance()
 		{
 			try
@@ -55,7 +55,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// POST: Maintenance/ScheduleMaintenance
+	
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> ScheduleMaintenance(MaintenanceRecord record)
@@ -66,7 +66,7 @@ namespace TransportationManagement.Controllers
 
 				if (ModelState.IsValid)
 				{
-					// 🔴 CHECK 0 - Vehicle already IN MAINTENANCE
+					
 					var vehicleData = await _context.Vehicles.FindAsync(record.vehicleId);
 
 					if (vehicleData != null && vehicleData.status == VehicleStatus.IN_SERVICE)
@@ -76,7 +76,7 @@ namespace TransportationManagement.Controllers
 						return View(record);
 					}
 
-					// CHECK 1 - Vehicle on a trip?
+					
 					bool onTrip = await _context.Trips
 						.AnyAsync(t =>
 							t.vehicleId == record.vehicleId &&
@@ -92,7 +92,7 @@ namespace TransportationManagement.Controllers
 						return View(record);
 					}
 
-					// CHECK 2 - Already has scheduled maintenance?
+					
 					bool alreadyScheduled = await _context.MaintenanceRecords
 						.AnyAsync(m =>
 							m.vehicleId == record.vehicleId &&
@@ -107,10 +107,10 @@ namespace TransportationManagement.Controllers
 						return View(record);
 					}
 
-					// Save maintenance record
+				
 					await _maintenanceService.ScheduleMaintenanceAsync(record);
 
-					// Update vehicle status to IN_SERVICE
+					
 					var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.vehicleId == record.vehicleId);
 
 					if (vehicle != null)
@@ -133,7 +133,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Maintenance/UpdateServiceRecord/5
+	
 		public async Task<IActionResult> UpdateServiceRecord(int id)
 		{
 			try
@@ -159,21 +159,20 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// POST: Maintenance/UpdateServiceRecord/5
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> UpdateServiceRecord(int id, MaintenanceRecord record)
 		{
 			try
 			{
-				// 🔹 Get existing record (tracked by EF)
+				
 				var existingRecord = await _context.MaintenanceRecords
 					.FirstOrDefaultAsync(m => m.maintenanceId == id);
 
 				if (existingRecord == null)
 					return NotFound();
 
-				// ❌ Block if already completed
+			
 				if (existingRecord.status == MaintenanceStatus.COMPLETED)
 				{
 					TempData["Error"] = "Completed maintenance cannot be updated.";
@@ -187,13 +186,13 @@ namespace TransportationManagement.Controllers
 
 				if (ModelState.IsValid)
 				{
-					// ✅ UPDATE existing record (NO tracking issue)
+					
 					existingRecord.serviceType = record.serviceType;
 					existingRecord.serviceDate = record.serviceDate;
 					existingRecord.remarks = record.remarks;
 					existingRecord.status = record.status;
 
-					// 🔥 If maintenance completed → set vehicle ACTIVE
+					
 					if (record.status == MaintenanceStatus.COMPLETED)
 					{
 						var vehicle = await _context.Vehicles
@@ -205,7 +204,7 @@ namespace TransportationManagement.Controllers
 						}
 					}
 
-					// 💾 SAVE ALL CHANGES ONCE
+				
 					await _context.SaveChangesAsync();
 
 					TempData["Success"] = "Service record updated successfully.";
@@ -224,7 +223,7 @@ namespace TransportationManagement.Controllers
 		}
 
 
-		// GET: Maintenance/GetMaintenanceHistory/5
+		
 		public async Task<IActionResult> GetMaintenanceHistory(int vehicleId)
 		{
 			try
@@ -241,7 +240,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Maintenance/Delete/5
+		
 		public async Task<IActionResult> Delete(int id)
 		{
 			try
@@ -251,7 +250,7 @@ namespace TransportationManagement.Controllers
 				if (record == null)
 					return NotFound();
 
-				// 🔒 BLOCK IF COMPLETED
+				
 				if (record.status == MaintenanceStatus.COMPLETED)
 				{
 					TempData["Error"] = "Completed maintenance cannot be deleted.";
@@ -267,7 +266,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// POST: Maintenance/Delete/5
+	
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> DeleteConfirmed(int id)
@@ -279,7 +278,7 @@ namespace TransportationManagement.Controllers
 				if (record == null)
 					return NotFound();
 
-				// 🔒 BLOCK IF COMPLETED
+			
 				if (record.status == MaintenanceStatus.COMPLETED)
 				{
 					TempData["Error"] = "Completed maintenance cannot be deleted.";
@@ -299,13 +298,10 @@ namespace TransportationManagement.Controllers
 		}
 
 
-		// KEY FIX - Show ALL vehicles in dropdown
 		private async Task PopulateVehicles()
 		{
 			try
 			{
-				// Show ALL vehicles - no status filter
-				// Validation handles blocked vehicles in POST
 				var vehicles = await _context.Vehicles.ToListAsync();
 				ViewBag.Vehicles = new SelectList(
 					vehicles, "vehicleId", "vehicleNumber");

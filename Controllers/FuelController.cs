@@ -1,21 +1,25 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using TransportationManagement.Data;
 using TransportationManagement.Models;
 using TransportationManagement.Services;
 
 namespace TransportationManagement.Controllers
 {
-	[Authorize(Roles = "Admin,FleetManager")]
+	[Authorize(Roles = "Admin,FleetManager,Driver")]
 	public class FuelController : Controller
 	{
 		private readonly FuelService _fuelService;
 		private readonly VehicleService _vehicleService;
+		private readonly ApplicationDbContext _context;
 
-		public FuelController(FuelService fuelService, VehicleService vehicleService)
+		public FuelController(FuelService fuelService, VehicleService vehicleService, ApplicationDbContext context)
 		{
 			_fuelService = fuelService;
 			_vehicleService = vehicleService;
+			_context = context;
 		}
 
 		// GET: Fuel
@@ -33,7 +37,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Fuel/AddFuelEntry
+	     
 		public async Task<IActionResult> AddFuelEntry()
 		{
 			try
@@ -48,32 +52,50 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// POST: Fuel/AddFuelEntry
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> AddFuelEntry(FuelEntry fuelEntry)
 		{
 			try
 			{
-				if (ModelState.IsValid)
+				if (!ModelState.IsValid)
 				{
-					await _fuelService.AddFuelEntryAsync(fuelEntry);
-					TempData["Success"] = "Fuel entry added successfully.";
-					return RedirectToAction(nameof(Index));
+					await PopulateVehicles();
+					return View(fuelEntry);
 				}
 
-				await PopulateVehicles();
-				return View(fuelEntry);
+				
+				var vehicle = await _context.Vehicles
+					.FirstOrDefaultAsync(v => v.vehicleId == fuelEntry.vehicleId);
+
+				if (vehicle == null)
+				{
+					ModelState.AddModelError("", "Vehicle not found.");
+					await PopulateVehicles();
+					return View(fuelEntry);
+				}
+
+				
+				_context.FuelEntries.Add(fuelEntry);
+
+			
+				vehicle.currentfuel += (double)fuelEntry.fuelQuantity;
+
+				
+				await _context.SaveChangesAsync();
+
+				TempData["Success"] = "Fuel entry added successfully!";
+				return RedirectToAction("Dashboard","Driver");
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while adding the fuel entry: " + ex.Message;
+				TempData["Error"] = "Error while adding fuel: " + ex.Message;
 				await PopulateVehicles();
 				return View(fuelEntry);
 			}
 		}
 
-		// GET: Fuel/GetFuelConsumption/5
+
 		public async Task<IActionResult> GetFuelConsumption(int vehicleId)
 		{
 			try
@@ -89,7 +111,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Fuel/GenerateFuelReport
+	
 		public async Task<IActionResult> GenerateFuelReport()
 		{
 			try
@@ -104,7 +126,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Fuel/Edit/5
+		
 		public async Task<IActionResult> Edit(int id)
 		{
 			try
@@ -121,7 +143,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// POST: Fuel/Edit/5
+	
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Edit(int id, FuelEntry fuelEntry)
@@ -147,7 +169,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Fuel/Delete/6
+		
 		public async Task<IActionResult> Delete(int id)
 		{
 			try
@@ -163,7 +185,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// POST: Fuel/Delete/6
+		
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> DeleteConfirmed(int id)

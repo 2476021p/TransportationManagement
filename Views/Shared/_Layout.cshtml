@@ -51,8 +51,19 @@
                             </a>
                         </li>
                     }
-                    @if (User.IsInRole("Admin") || User.IsInRole("FleetManager") || User.IsInRole("Driver"))
+
+                    @if (User.IsInRole("Driver"))
                     {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Driver" ? "active" : "")"
+                                   asp-controller="Driver" asp-action="Dashboard">
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                    }
+
+                    @if (User.IsInRole("Admin") || User.IsInRole("FleetManager") || User.IsInRole("Driver"))
+                    { 
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Trip" ? "active" : "")" asp-controller="Trip" asp-action="Index">
                                 @* <i class="fas fa-route"></i> *@

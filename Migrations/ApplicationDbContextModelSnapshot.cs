@@ -237,8 +237,8 @@ namespace TransportationManagement.Migrations
 
                     b.Property<string>("contactNumber")
                         .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("licenseNumber")
                         .IsRequired()
@@ -344,6 +344,9 @@ namespace TransportationManagement.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("tripId"));
 
+                    b.Property<double>("Fuelused")
+                        .HasColumnType("float");
+
                     b.Property<string>("destination")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -393,6 +396,9 @@ namespace TransportationManagement.Migrations
 
                     b.Property<int>("capacity")
                         .HasColumnType("int");
+
+                    b.Property<double>("currentfuel")
+                        .HasColumnType("float");
 
                     b.Property<string>("model")
                         .IsRequired()

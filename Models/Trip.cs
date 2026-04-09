@@ -48,5 +48,7 @@ namespace TransportationManagement.Models
 
 		[ForeignKey("driverId")]
 		public Driver? Driver { get; set; }
+
+		public double Fuelused { get; set; }
 	}
 }

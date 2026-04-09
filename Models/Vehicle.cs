@@ -7,6 +7,7 @@ namespace TransportationManagement.Models
     {
         ACTIVE,
         IN_SERVICE,
+        ON_TRIP,
         RETIRED
     }
 
@@ -29,8 +30,11 @@ namespace TransportationManagement.Models
         [Required]
         public int capacity { get; set; }
 
+
         [Required]
         public VehicleStatus status { get; set; } = VehicleStatus.ACTIVE;
+
+        public double currentfuel { get; set; }
 
         // Navigation properties
         public ICollection<Trip> Trips { get; set; } = new List<Trip>();

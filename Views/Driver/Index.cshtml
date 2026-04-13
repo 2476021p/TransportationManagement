@@ -42,7 +42,7 @@
         <table class="table table-hover" id="mainTable">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th>S.No</th>
                     <th>Name</th>
                     <th>License Number</th>
                     <th>Contact</th>
@@ -58,6 +58,9 @@
                 {
                     <tr>
                         <td>@i</td>
+                        @{
+                            i++;
+                        }
                         <td>@d.name</td>
                         <td>@d.licenseNumber</td>
                         <td>@d.contactNumber</td>

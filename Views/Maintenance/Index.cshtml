@@ -18,7 +18,10 @@
         @foreach(var m in Model){
             <tr>
                 <td>@i</td>
-                <td>@(m.Vehicle?.vehicleNumber ?? "-")</td>
+                    @{
+                        i++;
+                    }
+                    <td>@(m.Vehicle?.vehicleNumber ?? "-")</td>
                 <td>@m.serviceType</td>
                 <td>@m.serviceDate.ToString("dd MMM yyyy")</td>
                 <td>@(m.remarks ?? "-")</td>

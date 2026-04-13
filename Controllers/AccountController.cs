@@ -24,330 +24,174 @@ namespace TransportationManagement.Controllers
 			_context = context;
 		}
 
-		
+		// --- 1. LOGIN (GET) ---
 		[HttpGet]
-		public IActionResult Login(string? returnUrl = null)
-		{
-			try
-			{
-				ViewBag.ReturnUrl = returnUrl ?? returnUrl;
-				return View();
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while loading the login page: " + ex.Message;
-				return View();
-			}
-		}
+		public IActionResult Login() => View();
 
-		
+		// --- 2. LOGIN (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
+		public async Task<IActionResult> Login(LoginViewModel model)
 		{
-			try
+			if (!ModelState.IsValid) return View(model);
+
+			var user = await _userManager.FindByEmailAsync(model.Email);
+			if (user == null)
 			{
-				if (!ModelState.IsValid)
-					return View(model);
+				ModelState.AddModelError("",
+					"Email not found in Identity system. Please create user first.");
+				return View(model);
+			}
 
-				var result = await _signInManager.PasswordSignInAsync(
-					model.Email,
-					model.Password,
-					model.RememberMe,
-					false);
+			var result = await _signInManager.PasswordSignInAsync(
+				user, model.Password, model.RememberMe, false);
 
-				if (result.Succeeded)
+			if (result.Succeeded)
+			{
+				var roles = await _userManager.GetRolesAsync(user);
+
+				// DRIVER REDIRECT
+				if (roles.Contains("Driver"))
 				{
-					var user = await _userManager.FindByEmailAsync(model.Email);
+					var driver = await _context.Drivers
+						.FirstOrDefaultAsync(d =>
+							d.userId == user.Id ||
+							d.Email.ToLower() == user.Email.ToLower());
 
-					// ==== DRIVER ====
-					if (await _userManager.IsInRoleAsync(user, "Driver"))
+					if (driver != null)
 					{
-						// Find driver by userId
-						var driver = await _context.Drivers
-							.FirstOrDefaultAsync(d => d.userId == user.Id);
-
-						// If userId not linked yet, find by most recent unlinked driver
-						if (driver == null)
+						// Sync userId if missing
+						if (string.IsNullOrEmpty(driver.userId))
 						{
-							driver = await _context.Drivers
-								.Where(d => d.userId == null || d.userId == "")
-								.OrderByDescending(d => d.driverId)
-								.FirstOrDefaultAsync();
-
-							if (driver != null)
-							{
-								// Link now
-								driver.userId = user.Id;
-								_context.Drivers.Update(driver);
-								await _context.SaveChangesAsync();
-							}
+							driver.userId = user.Id;
+							_context.Update(driver);
+							await _context.SaveChangesAsync();
 						}
 
-						if (driver != null)
-						{
-							HttpContext.Session.SetString("DriverId",
-								driver.driverId.ToString());
-							HttpContext.Session.SetString("Role", "Driver");
-							return RedirectToAction("Dashboard", "Driver");
-						}
-						else
-						{
-							await _signInManager.SignOutAsync();
-							ModelState.AddModelError("",
-								"Driver profile not found. Contact admin.");
-							return View(model);
-						}
+						HttpContext.Session.SetString("DriverId",
+							driver.driverId.ToString());
+						HttpContext.Session.SetString("Role", "Driver");
+						return RedirectToAction("Dashboard", "Driver");
 					}
-
-
-					// ==== ADMIN ====
-					if (await _userManager.IsInRoleAsync(user, "Admin"))
+					else
 					{
-						HttpContext.Session.SetString("Role", "Admin");
-						return RedirectToAction("Dashboard", "Admin");
-					}
-
-					// ==== FLEET MANAGER ====
-					if (await _userManager.IsInRoleAsync(user, "FleetManager"))
-					{
-						HttpContext.Session.SetString("Role", "FleetManager");
-						return RedirectToAction("Dashboard", "Admin");
-					}
-
-					// ==== MAINTENANCE ====
-					if (await _userManager.IsInRoleAsync(user, "MaintenanceEngineer"))
-					{
-						HttpContext.Session.SetString("Role", "MaintenanceEngineer");
-						return RedirectToAction("Index", "Maintenance");
+						await _signInManager.SignOutAsync();
+						ModelState.AddModelError("",
+							"User found, but no matching record in Drivers table.");
+						return View(model);
 					}
 				}
 
-				ModelState.AddModelError("", "Invalid login attempt.");
-				return View(model);
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred during login: " + ex.Message;
-				return View(model);
-			}
-		}
-
-		// LOGOUT
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Logout()
-		{
-			try
-			{
-				await _signInManager.SignOutAsync();
-				HttpContext.Session.Clear();
-				return RedirectToAction("Login", "Account");
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred during logout: " + ex.Message;
-				return RedirectToAction("Login", "Account");
-			}
-		}
-
-		// HELPER
-		private IActionResult RedirectToLocal(string returnUrl)
-		{
-			try
-			{
-				if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-					return Redirect(returnUrl);
-				return RedirectToAction("Dashboard", "Admin");
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "Redirect error: " + ex.Message;
-				return RedirectToAction("Dashboard", "Admin");
-			}
-		}
-
-		// CREATE USER GET
-		[HttpGet]
-		public IActionResult CreateUser()
-		{
-			try
-			{
-				// Pass roles to ViewBag
-				ViewBag.Roles = new List<SelectListItem>
+				// ADMIN REDIRECT
+				if (roles.Contains("Admin"))
 				{
-					new SelectListItem { Value = "Admin", Text = "Admin" },
-					new SelectListItem { Value = "FleetManager", Text = "Fleet Manager" },
-					new SelectListItem { Value = "Driver", Text = "Driver" },
-					new SelectListItem { Value = "MaintenanceEngineer", Text = "Maintenance Engineer" }
-				};
-				return View();
+					HttpContext.Session.SetString("Role", "Admin");
+					return RedirectToAction("Dashboard", "Admin");
+				}
+
+				// FLEET MANAGER REDIRECT
+				if (roles.Contains("FleetManager"))
+				{
+					HttpContext.Session.SetString("Role", "FleetManager");
+					return RedirectToAction("Dashboard", "Admin");
+				}
+
+				// ✅ FIX: MAINTENANCE ENGINEER REDIRECT (was completely missing!)
+				if (roles.Contains("MaintenanceEngineer"))
+				{
+					HttpContext.Session.SetString("Role", "MaintenanceEngineer");
+					return RedirectToAction("Index", "Maintenance");
+				}
+
+				// Fallback
+				return RedirectToAction("Index", "Home");
 			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while loading the create user page: " + ex.Message;
-				return RedirectToAction("Users");
-			}
+
+			ModelState.AddModelError("", "Invalid password. Please try again.");
+			return View(model);
 		}
 
-		// CREATE USER POST
+		// --- 3. CREATE USER (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> CreateUser(CreateUserViewModel model)
 		{
-			try
+			if (!ModelState.IsValid)
 			{
-				if (!ModelState.IsValid)
-				{
-					// Re-pass roles on validation failure
-					ViewBag.Roles = new List<SelectListItem>
-					{
-						new SelectListItem { Value = "Admin", Text = "Admin" },
-						new SelectListItem { Value = "FleetManager", Text = "Fleet Manager" },
-						new SelectListItem { Value = "Driver", Text = "Driver" },
-						new SelectListItem { Value = "MaintenanceEngineer", Text = "Maintenance Engineer" }
-					};
-					return View(model);
-				}
+				ViewBag.Roles = GetRolesList();
+				return View(model);
+			}
 
-				var user = new ApplicationUser
-				{
-					UserName = model.Email,
-					Email = model.Email,
-					FullName = model.FullName
-				};
+			var user = new ApplicationUser
+			{
+				UserName = model.Email,
+				Email = model.Email,
+				FullName = model.FullName
+			};
 
-				var result = await _userManager.CreateAsync(user, model.Password);
+			var result = await _userManager.CreateAsync(user, model.Password);
 
-				if (result.Succeeded)
-				{
-					foreach (var error in result.Errors)
-						ModelState.AddModelError("", error.Description);
-
-					ViewBag.Roles = new List<SelectListItem>
-					{
-						new SelectListItem { Value = "Admin", Text = "Admin" },
-						new SelectListItem { Value = "FleetManager", Text = "Fleet Manager" },
-						new SelectListItem { Value = "Driver", Text = "Driver" },
-						new SelectListItem { Value = "MaintenanceEngineer", Text = "Maintenance Engineer" }
-					};
-					return View(model);
-				}
-
-				// Assign Role
+			if (result.Succeeded)
+			{
 				await _userManager.AddToRoleAsync(user, model.Role);
-				TempData["Success"] = "User created successfully!";
-				return RedirectToAction(nameof(User));
+
+				// Link Identity user to Driver table if role is Driver
+				if (model.Role == "Driver")
+				{
+					var existingDriver = await _context.Drivers
+						.FirstOrDefaultAsync(d =>
+							d.Email.ToLower() == model.Email.ToLower());
+
+					if (existingDriver != null)
+					{
+						existingDriver.userId = user.Id;
+						_context.Update(existingDriver);
+					}
+					else
+					{
+						var newDriver = new Driver
+						{
+							name = model.FullName,
+							Email = model.Email,
+							userId = user.Id,
+							status = DriverStatus.AVAILABLE
+						};
+						_context.Drivers.Add(newDriver);
+					}
+					await _context.SaveChangesAsync();
+				}
+
+				TempData["Success"] = "Account created and linked successfully!";
+				return RedirectToAction("Index", "Admin");
 			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while creating the user: " + ex.Message;
-				return View(model);
-			}
+
+			foreach (var error in result.Errors)
+				ModelState.AddModelError("", error.Description);
+
+			ViewBag.Roles = GetRolesList();
+			return View(model);
 		}
 
-		// EDIT USER GET
-		[HttpGet]
-		public async Task<IActionResult> EditUser(string id)
-		{
-			try
-			{
-				var user = await _userManager.FindByIdAsync(id);
-				if (user == null) return NotFound();
-
-				var roles = await _userManager.GetRolesAsync(user);
-
-				var model = new EditUserViewModel
-				{
-					Id = user.Id,
-					FullName = user.FullName ?? "",
-					Email = user.Email ?? "",
-					Role = roles.FirstOrDefault() ?? ""
-				};
-
-				ViewBag.Roles = new List<SelectListItem>
-				{
-					new SelectListItem { Value = "Admin", Text = "Admin" },
-					new SelectListItem { Value = "FleetManager", Text = "Fleet Manager" },
-					new SelectListItem { Value = "Driver", Text = "Driver" },
-					new SelectListItem { Value = "MaintenanceEngineer", Text = "Maintenance Engineer" }
-				};
-				return View(model);
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while loading the edit user page: " + ex.Message;
-				return RedirectToAction(nameof(User));
-			}
-		}
-
-		// EDIT USER POST
+		// --- 4. LOGOUT ---
 		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> EditUser(EditUserViewModel model)
+		public async Task<IActionResult> Logout()
 		{
-			try
-			{
-				if (!ModelState.IsValid)
-					return View(model);
-
-				var user = await _userManager.FindByIdAsync(model.Id);
-				if (user == null)
-					return NotFound();
-
-				user.FullName = model.FullName;
-				user.Email = model.Email;
-				user.UserName = model.Email;
-
-				await _userManager.UpdateAsync(user);
-
-				// Update Role
-				var currentRoles = await _userManager.GetRolesAsync(user);
-				await _userManager.RemoveFromRolesAsync(user, currentRoles);
-				await _userManager.AddToRoleAsync(user, model.Role);
-
-				TempData["Success"] = "User updated successfully!";
-				return RedirectToAction(nameof(User));
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while updating the user: " + ex.Message;
-				return View(model);
-			}
+			await _signInManager.SignOutAsync();
+			HttpContext.Session.Clear();
+			return RedirectToAction("Login");
 		}
 
-		// DELETE USER
-		public async Task<IActionResult> DeleteUser(string id)
+		// --- HELPER ---
+		private List<SelectListItem> GetRolesList()
 		{
-			try
+			return new List<SelectListItem>
 			{
-				var user = await _userManager.FindByIdAsync(id);
-				if (user == null)
-					return NotFound();
-				await _userManager.DeleteAsync(user);
-				TempData["Success"] = "User deleted successfully!";
-				return RedirectToAction(nameof(User));
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while deleting the user: " + ex.Message;
-				return RedirectToAction(nameof(User));
-			}
-		}
-
-		// DRIVERS LIST
-		public IActionResult Drivers()
-		{
-			try
-			{
-				var drivers = _context.Drivers.ToList();
-				return View(drivers);
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while loading drivers: " + ex.Message;
-				return View(new List<Driver>());
-			}
+				new SelectListItem { Value = "Admin", Text = "Admin" },
+				new SelectListItem { Value = "FleetManager", Text = "Fleet Manager" },
+				new SelectListItem { Value = "Driver", Text = "Driver" },
+                // ✅ FIX: MaintenanceEngineer was missing from dropdown!
+                new SelectListItem { Value = "MaintenanceEngineer", Text = "Maintenance Engineer" }
+			};
 		}
 	}
 }

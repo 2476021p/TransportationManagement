@@ -1,43 +1,36 @@
-using System.Net;
 using Microsoft.EntityFrameworkCore;
+using TransportationManagement.Data;
 using TransportationManagement.Interfaces;
 using TransportationManagement.Models;
-using TransportationManagement.Data;
 
 namespace TransportationManagement.Repositories
 {
 	public class TripRepository : ITripRepository
 	{
-		private readonly ApplicationDbContext _context; // ✅ FIXED
+		private readonly ApplicationDbContext _context;
 
-		public TripRepository(ApplicationDbContext context) // ✅ FIXED
+		public TripRepository(ApplicationDbContext context)
 		{
 			_context = context;
 		}
 
-		public async Task<IEnumerable<Trip>> GetAllTripsAsync()
-		{
-			return await _context.Trips
+		public async Task<IEnumerable<Trip>> GetAllTripsAsync() =>
+			await _context.Trips
 				.Include(t => t.Vehicle)
 				.Include(t => t.Driver)
 				.ToListAsync();
-		}
 
-		public async Task<Trip?> GetTripByIdAsync(int tripId)
-		{
-			return await _context.Trips
+		public async Task<Trip?> GetTripByIdAsync(int tripId) =>
+			await _context.Trips
 				.Include(t => t.Vehicle)
 				.Include(t => t.Driver)
 				.FirstOrDefaultAsync(t => t.tripId == tripId);
-		}
 
-		public async Task<IEnumerable<Trip>> GetTripsByDriverIdAsync(int driverId)
-		{
-			return await _context.Trips
+		public async Task<IEnumerable<Trip>> GetTripsByDriverIdAsync(int driverId) =>
+			await _context.Trips
 				.Include(t => t.Vehicle)
 				.Where(t => t.driverId == driverId)
 				.ToListAsync();
-		}
 
 		public async Task AddTripAsync(Trip trip)
 		{
@@ -61,23 +54,20 @@ namespace TransportationManagement.Repositories
 			}
 		}
 
-		public async Task<bool> TripExistsAsync(int tripId)
-		{
-			return await _context.Trips.AnyAsync(t => t.tripId == tripId);
-		}
+		public async Task<bool> TripExistsAsync(int tripId) =>
+			await _context.Trips.AnyAsync(t => t.tripId == tripId);
 
-		public async Task<bool> IsDriverBusyAsync(int driverId)
-		{
-			return await _context.Trips
-				.AnyAsync(t => t.driverId == driverId
-					&& t.tripStatus == TripStatus.IN_PROGRESS);
-		}
+		public async Task<bool> IsDriverBusyAsync(int driverId) =>
+			await _context.Trips.AnyAsync(t =>
+				t.driverId == driverId &&
+				t.tripStatus == TripStatus.IN_PROGRESS);
 
-		public async Task<bool> IsVehicleBusyAsync(int vehicleId)
-		{
-			return await _context.Trips
-				.AnyAsync(t => t.vehicleId == vehicleId
-					&& t.tripStatus == TripStatus.IN_PROGRESS);
-		}
+		public async Task<bool> IsVehicleBusyAsync(int vehicleId) =>
+			await _context.Trips.AnyAsync(t =>
+				t.vehicleId == vehicleId &&
+				t.tripStatus == TripStatus.IN_PROGRESS);
+
+		public async Task SaveChangesAsync() =>
+			await _context.SaveChangesAsync();
 	}
 }

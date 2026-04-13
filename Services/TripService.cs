@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using TransportationManagement.Interfaces;
 using TransportationManagement.Models;
 
@@ -21,151 +19,118 @@ namespace TransportationManagement.Services
 			_vehicleRepository = vehicleRepository;
 		}
 
-		public async Task<IEnumerable<Trip>> GetAllTripsAsync()
-		{
-			return await _tripRepository.GetAllTripsAsync();
-		}
+		public async Task<IEnumerable<Trip>> GetAllTripsAsync() =>
+			await _tripRepository.GetAllTripsAsync();
 
-		public async Task<Trip?> GetTripPlanAsync(int tripId)
-		{
-			return await _tripRepository.GetTripByIdAsync(tripId);
-		}
+		public async Task<Trip?> GetTripPlanAsync(int tripId) =>
+			await _tripRepository.GetTripByIdAsync(tripId);
 
-		// CREATE TRIP WITH STATUS UPDATE
-		public async Task CreateTripAsync(Trip trip)
+		public async Task<(bool Success, string Message)> CreateTripAsync(Trip trip)
 		{
-			// Check driver busy
-			if (trip.driverId.HasValue)
-			{
-				if (await _tripRepository.IsDriverBusyAsync(
-					trip.driverId.Value))
-					throw new Exception(
-						"Driver is already in an ongoing trip.");
-			}
+			// Check driver availability
+			if (trip.driverId.HasValue &&
+				await _tripRepository.IsDriverBusyAsync(trip.driverId.Value))
+				return (false, "Driver is already assigned to another active trip.");
 
-			// Check vehicle busy
+			// Check vehicle availability
 			if (await _tripRepository.IsVehicleBusyAsync(trip.vehicleId))
-				throw new Exception(
-					"Vehicle is already in an ongoing trip.");
+				return (false, "Vehicle is already assigned to another active trip.");
 
-			// Set trip status
-			trip.tripStatus = TripStatus.IN_PROGRESS;
+			// Check vehicle status
+			var vehicle = await _vehicleRepository.GetVehicleByIdAsync(trip.vehicleId);
+			if (vehicle == null || vehicle.status == VehicleStatus.RETIRED)
+				return (false, "Vehicle is not available for trips.");
 
-			// Update Driver status
+			trip.tripStatus = TripStatus.PLANNED;
+			trip.startDateTime = DateTime.Now;
+
+			await _tripRepository.AddTripAsync(trip);
+
+			// Update statuses immediately upon planning
 			if (trip.driverId.HasValue)
 			{
-				var driver = await _driverRepository
-					.GetDriverByIdAsync(trip.driverId.Value);
-				if (driver != null)
-				{
-					driver.status = DriverStatus.ON_TRIP;
-					await _driverRepository.UpdateDriverAsync(driver);
-				}
+				var driver = await _driverRepository.GetDriverByIdAsync(trip.driverId.Value);
+				if (driver != null) driver.status = DriverStatus.ON_TRIP;
 			}
 
-			// Update Vehicle status
-			var vehicle = await _vehicleRepository
-				.GetVehicleByIdAsync(trip.vehicleId);
-			if (vehicle != null)
-			{
-				vehicle.status = VehicleStatus.IN_SERVICE;
-				await _vehicleRepository.UpdateVehicleAsync(vehicle);
-			}
+			if (vehicle != null) vehicle.status = VehicleStatus.ON_TRIP;
 
-			// Save trip
-			await _tripRepository.AddTripAsync(trip);
+			await _tripRepository.SaveChangesAsync();
+			return (true, "Trip created successfully!");
 		}
 
-		// UPDATE TRIP STATUS
-		public async Task UpdateTripStatusAsync(Trip trip)
+		public async Task UpdateTripStatusAsync(Trip tripUpdate)
 		{
-			// IF IN PROGRESS - set busy
-			if (trip.tripStatus == TripStatus.IN_PROGRESS)
-			{
-				if (trip.driverId.HasValue)
-				{
-					var driver = await _driverRepository
-						.GetDriverByIdAsync(trip.driverId.Value);
-					if (driver != null)
-					{
-						driver.status = DriverStatus.ON_TRIP;
-						await _driverRepository.UpdateDriverAsync(driver);
-					}
-				}
+			var existing = await _tripRepository.GetTripByIdAsync(tripUpdate.tripId);
+			if (existing == null) return;
 
-				var vehicle = await _vehicleRepository
-					.GetVehicleByIdAsync(trip.vehicleId);
-				if (vehicle != null)
-				{
-					vehicle.status = VehicleStatus.IN_SERVICE;
-					await _vehicleRepository.UpdateVehicleAsync(vehicle);
-				}
+			existing.origin = tripUpdate.origin;
+			existing.destination = tripUpdate.destination;
+			existing.tripStatus = tripUpdate.tripStatus;
+
+			if (existing.tripStatus == TripStatus.COMPLETED)
+			{
+				existing.endDateTime = DateTime.Now;
+				if (existing.Driver != null)
+					existing.Driver.status = DriverStatus.AVAILABLE;
+				if (existing.Vehicle != null)
+					existing.Vehicle.status = VehicleStatus.ACTIVE;
+			}
+			else if (existing.tripStatus == TripStatus.IN_PROGRESS)
+			{
+				if (existing.Driver != null)
+					existing.Driver.status = DriverStatus.ON_TRIP;
+				if (existing.Vehicle != null)
+					existing.Vehicle.status = VehicleStatus.ON_TRIP;
 			}
 
-			// IF COMPLETED - free them
-			if (trip.tripStatus == TripStatus.COMPLETED)
-			{
-				if (trip.driverId.HasValue)
-				{
-					var driver = await _driverRepository
-						.GetDriverByIdAsync(trip.driverId.Value);
-					if (driver != null)
-					{
-						driver.status = DriverStatus.AVAILABLE;
-						await _driverRepository.UpdateDriverAsync(driver);
-					}
-				}
+			await _tripRepository.UpdateTripAsync(existing);
+		}
 
-				var vehicle = await _vehicleRepository
-					.GetVehicleByIdAsync(trip.vehicleId);
-				if (vehicle != null)
-				{
-					vehicle.status = VehicleStatus.ACTIVE;
-					await _vehicleRepository.UpdateVehicleAsync(vehicle);
-				}
+		public async Task<(bool Success, string Message)> StartTripAsync(int tripId)
+		{
+			var trip = await _tripRepository.GetTripByIdAsync(tripId);
+			if (trip == null) return (false, "Trip not found.");
+			if (trip.tripStatus != TripStatus.PLANNED)
+				return (false, "Trip is not in PLANNED state.");
+
+			// Check minimum fuel
+			double requiredFuel = 20;
+			if (trip.Vehicle == null || trip.Vehicle.currentfuel < requiredFuel)
+				return (false, $"Minimum {requiredFuel}L fuel required!");
+
+			trip.tripStatus = TripStatus.IN_PROGRESS;
+			trip.startDateTime = DateTime.Now;
+			trip.Fuelused = requiredFuel;
+
+			if (trip.Driver != null) trip.Driver.status = DriverStatus.ON_TRIP;
+			if (trip.Vehicle != null) trip.Vehicle.status = VehicleStatus.IN_SERVICE;
+
+			await _tripRepository.UpdateTripAsync(trip);
+			return (true, "Trip started successfully!");
+		}
+
+		public async Task CompleteTripAsync(int tripId)
+		{
+			var trip = await _tripRepository.GetTripByIdAsync(tripId);
+			if (trip == null) return;
+
+			trip.tripStatus = TripStatus.COMPLETED;
+			trip.endDateTime = DateTime.Now;
+
+			if (trip.Driver != null)
+				trip.Driver.status = DriverStatus.AVAILABLE;
+
+			if (trip.Vehicle != null)
+			{
+				trip.Vehicle.status = VehicleStatus.ACTIVE;
+				trip.Vehicle.currentfuel = 0;
 			}
 
-			// Save trip update
 			await _tripRepository.UpdateTripAsync(trip);
 		}
 
-		public async Task DeleteTripAsync(int tripId)
-		{
-			await _tripRepository.DeleteTripAsync(tripId);
-		}
-
-		public async Task<IEnumerable<Trip>> GetAssignedTripsAsync(
-			int driverId)
-		{
-			return await _tripRepository
-				.GetTripsByDriverIdAsync(driverId);
-		}
-
-		public async Task<bool> IsDriverBusyAsync(int driverId)
-		{
-			return await _tripRepository.IsDriverBusyAsync(driverId);
-		}
-
-		public async Task<bool> IsVehicleBusyAsync(int vehicleId)
-		{
-			return await _tripRepository.IsVehicleBusyAsync(vehicleId);
-		}
-
-		public async Task<IEnumerable<Trip>> GetTripsByDriverIdAsync(
-			int driverId)
-		{
-			return await _tripRepository
-				.GetTripsByDriverIdAsync(driverId);
-		}
-
-		public async Task<Trip?> GetTripByIdAsync(int tripId)
-		{
-			return await _tripRepository.GetTripByIdAsync(tripId);
-		}
-
-		public async Task UpdateTripAsync(Trip trip)
-		{
-			await _tripRepository.UpdateTripAsync(trip);
-		}
+		public async Task DeleteTripAsync(int id) =>
+			await _tripRepository.DeleteTripAsync(id);
 	}
 }

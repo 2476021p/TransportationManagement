@@ -3,137 +3,207 @@
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<div class="dashboard-grid">
-    <div class="stat-card stat-blue">
-        @* <div class="stat-icon"><i class="fas fa-car"></i></div> *@
-        <div class="stat-info">
-            <h3>@Model.TotalVehicles</h3>
-            <p>Total Vehicles</p>
+<style>
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --accent-primary: #6366f1; /* Indigo */
+        --text-dark: #0f172a;
+        --text-light: #64748b;
+        --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        --card-hover-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-wrapper {
+        padding: 1.5rem;
+        background-color: #f1f5f9;
+        min-height: 100vh;
+        font-family: 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Header Section */
+    .premium-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .premium-header h1 {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        letter-spacing: -0.025em;
+    }
+
+    /* Bento Grid Layout */
+    .premium-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .premium-card {
+        background: var(--glass-bg);
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .premium-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-hover-shadow);
+        border-color: var(--accent-primary);
+    }
+
+    /* Top Row of Card */
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    /* Action Icon instead of View All */
+    .btn-action {
+        color: #94a3b8;
+        transition: color 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-action:hover { color: var(--accent-primary); }
+
+    /* Typography */
+    .stat-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin-top: 0.25rem;
+    }
+
+    /* Color Variants */
+    .bg-blue { background: #e0e7ff; color: #4338ca; }
+    .bg-green { background: #dcfce7; color: #15803d; }
+    .bg-orange { background: #ffedd5; color: #c2410c; }
+    .bg-red { background: #fee2e2; color: #b91c1c; }
+    .bg-purple { background: #f3e8ff; color: #7e22ce; }
+    .bg-teal { background: #ccfbf1; color: #0f766e; }
+
+    /* Empty State Styling */
+    .empty-state-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 3rem;
+        text-align: center;
+        border: 2px dashed #e2e8f0;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+    }
+
+    .empty-text {
+        color: var(--text-light);
+        font-size: 1rem;
+    }
+</style>
+
+<div class="dashboard-wrapper">
+    <div class="premium-header">
+        <div>
+            <h1>Admin Dashboard</h1>
+            <p style="color: var(--text-light)">Fleet management and system overview</p>
         </div>
-        <a asp-controller="Vehicle" asp-action="Index" class="stat-link">View All</a>
-    </div>
-    <div class="stat-card stat-green">
-        @* <div class="stat-icon"><i class="fas fa-id-card"></i></div> *@
-        <div class="stat-info">
-            <h3>@Model.TotalDrivers</h3>
-            <p>Total Drivers</p>
-        </div>
-        <a asp-controller="Driver" asp-action="Index" class="stat-link">View All</a>
-    </div>
-    <div class="stat-card stat-orange">
-        @* <div class="stat-icon"><i class="fas fa-route"></i></div> *@
-        <div class="stat-info">
-            <h3>@Model.TotalTrips</h3>
-            <p>Total Trips</p>
-        </div>
-        <a asp-controller="Trip" asp-action="Index" class="stat-link">View All</a>
-    </div>
-    <div class="stat-card stat-red">
-        @* <div class="stat-icon"><i class="fas fa-wrench"></i></div> *@
-        <div class="stat-info">
-            <h3>@Model.TotalMaintenanceRecords</h3>
-            <p>Maintenance Records</p>
-        </div>
-        <a  asp-controller="Maintenance" asp-action="Index" class="stat-link">View All</a>
-    </div>
-    <div class="stat-card stat-purple">
-        @* <div class="stat-icon"><i class="fas fa-gas-pump"></i></div> *@
-        <div class="stat-info">
-            <h3>@Model.TotalFuelEntries</h3>
-            <p>Fuel Entries</p>
-        </div>
-        <a asp-controller="Fuel" asp-action="Index" class="stat-link">View All</a>
     </div>
 
-    @if (User.IsInRole("Admin"))
-    {
-        <div class="stat-card stat-teal">
-            @* <div class="stat-icon"><i class="fas fa-users"></i></div> *@
-            <div class="stat-info">
-                <h3>@Model.TotalUsers</h3>
-                <p>System Users</p>
+    <div class="premium-grid">
+        <div class="premium-card">
+            <div class="card-top">
+                <div class="icon-wrapper bg-blue"><i class="fas fa-car"></i></div>
+                <a asp-controller="Vehicle" asp-action="Index" class="btn-action"><i class="fas fa-chevron-right"></i></a>
             </div>
-            <a asp-controller="Admin" asp-action="Users" class="stat-link">View All</a>
+            <span class="stat-label">Vehicles</span>
+            <h2 class="stat-value">@Model.TotalVehicles</h2>
+        </div>
+
+        <div class="premium-card">
+            <div class="card-top">
+                <div class="icon-wrapper bg-green"><i class="fas fa-id-card"></i></div>
+                <a asp-controller="Driver" asp-action="Index" class="btn-action"><i class="fas fa-chevron-right"></i></a>
+            </div>
+            <span class="stat-label">Drivers</span>
+            <h2 class="stat-value">@Model.TotalDrivers</h2>
+        </div>
+
+        <div class="premium-card">
+            <div class="card-top">
+                <div class="icon-wrapper bg-orange"><i class="fas fa-route"></i></div>
+                <a asp-controller="Trip" asp-action="Index" class="btn-action"><i class="fas fa-chevron-right"></i></a>
+            </div>
+            <span class="stat-label">Trips</span>
+            <h2 class="stat-value">@Model.TotalTrips</h2>
+        </div>
+
+        <div class="premium-card">
+            <div class="card-top">
+                <div class="icon-wrapper bg-red"><i class="fas fa-wrench"></i></div>
+                <a asp-controller="Maintenance" asp-action="Index" class="btn-action"><i class="fas fa-chevron-right"></i></a>
+            </div>
+            <span class="stat-label">Maintenance</span>
+            <h2 class="stat-value">@Model.TotalMaintenanceRecords</h2>
+        </div>
+
+        <div class="premium-card">
+            <div class="card-top">
+                <div class="icon-wrapper bg-purple"><i class="fas fa-gas-pump"></i></div>
+                <a asp-controller="Fuel" asp-action="Index" class="btn-action"><i class="fas fa-chevron-right"></i></a>
+            </div>
+            <span class="stat-label">Fuel Entries</span>
+            <h2 class="stat-value">@Model.TotalFuelEntries</h2>
+        </div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="premium-card">
+                <div class="card-top">
+                    <div class="icon-wrapper bg-teal"><i class="fas fa-users"></i></div>
+                    <a asp-controller="Admin" asp-action="Users" class="btn-action"><i class="fas fa-chevron-right"></i></a>
+                </div>
+                <span class="stat-label">System Users</span>
+                <h2 class="stat-value">@Model.TotalUsers</h2>
+            </div>
+        }
+    </div>
+
+    @if(Model.TotalTrips == 0) {
+        <div class="empty-state-section">
+            <div class="empty-icon"><i class="fas fa-map-marked-alt"></i></div>
+            <p class="empty-text">No active trips found. Start by assigning a driver to a vehicle.</p>
         </div>
     }
-</div>
-
-<div class="dashboard-tables">
-    <div class="dash-table-card">
-        <div class="dash-table-header">
-            @* <h4><i class="fas fa-car"></i> Recent Vehicles</h4> *@
-            <a asp-controller="Vehicle" asp-action="Index" class="btn btn-sm btn-outline">View All</a>
-        </div>
-        <table class="table">
-            <thead>
-                <tr><th>Number</th><th>Model</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-                @foreach (var v in Model.RecentVehicles)
-                {
-                    <tr>
-                        <td>@v.vehicleNumber</td>
-                        <td>@v.model</td>
-                        <td><span class="badge badge-@(v.status == VehicleStatus.ACTIVE ? "success" : v.status == VehicleStatus.IN_SERVICE ? "warning" : "danger")">@v.status</span></td>
-                    </tr>
-                }
-                @if (!Model.RecentVehicles.Any())
-                {
-                    <tr><td colspan="3" class="text-center">No vehicles found.</td></tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="dash-table-card">
-        <div class="dash-table-header">
-            @* <h4><i class="fas fa-route"></i> Recent Trips</h4> *@
-            <a asp-controller="Trip" asp-action="Index" class="btn btn-sm btn-outline">View All</a>
-        </div>
-        <table class="table">
-            <thead>
-                <tr><th>Origin</th><th>Destination</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-                @foreach (var t in Model.RecentTrips)
-                {
-                    <tr>
-                        <td>@t.origin</td>
-                        <td>@t.destination</td>
-                        <td><span class="badge badge-@(t.tripStatus == TripStatus.COMPLETED ? "success" : t.tripStatus == TripStatus.IN_PROGRESS ? "warning" : "info")">@t.tripStatus</span></td>
-                    </tr>
-                }
-                @if (!Model.RecentTrips.Any())
-                {
-                    <tr><td colspan="3" class="text-center">No trips found.</td></tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <div class="dash-table-card">
-        <div class="dash-table-header">
-            @* <h4><i class="fas fa-wrench"></i> Recent Maintenance</h4> *@
-            <a asp-controller="Maintenance" asp-action="Index" class="btn btn-sm btn-outline">View All</a>
-        </div>
-        <table class="table">
-            <thead>
-                <tr><th>Service Type</th><th>Date</th><th>Remarks</th></tr>
-            </thead>
-            <tbody>
-                @foreach (var m in Model.RecentMaintenance)
-                {
-                    <tr>
-                        <td>@m.serviceType</td>
-                        <td>@m.serviceDate.ToString("dd MMM yyyy")</td>
-                        <td>@(m.remarks ?? "-")</td>
-                    </tr>
-                }
-                @if (!Model.RecentMaintenance.Any())
-                {
-                    <tr><td colspan="3" class="text-center">No records found.</td></tr>
-                }
-            </tbody>
-        </table>
-    </div>
 </div>

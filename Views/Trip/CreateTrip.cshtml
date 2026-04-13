@@ -1,46 +1,55 @@
 @model TransportationManagement.Models.Trip
-@{ ViewData["Title"] = "Create Trip"; }
+@{
+    ViewData["Title"] = "Create Trip";
+}
+
 <div class="page-header">
     <h2><i class="fas fa-plus-circle"></i> Create New Trip</h2>
     <a asp-action="Index" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
 </div>
+
 <div class="card form-card">
     <form asp-action="CreateTrip" method="post">
-        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
         <div class="form-row">
-            <div class="form-group col-6">
+            <div class="form-group col-md-6">
                 <label asp-for="vehicleId">Vehicle</label>
-                <select asp-for="vehicleId" asp-items="ViewBag.Vehicles" class="form-control"><option value="">-- Select Vehicle --</option></select>
-                <span asp-validation-for="vehicleId" class="field-error"></span>
+                <select asp-for="vehicleId" asp-items="ViewBag.Vehicles" class="form-control">
+                    <option value="">-- Select Active Vehicle --</option>
+                </select>
+                <span asp-validation-for="vehicleId" class="text-danger"></span>
             </div>
-            <div class="form-group col-6">
+            <div class="form-group col-md-6">
                 <label asp-for="driverId">Driver</label>
-                <select asp-for="driverId" asp-items="ViewBag.Drivers" class="form-control"><option value="">-- Select Driver --</option></select>
-                <span asp-validation-for="driverId" class="field-error"></span>
+                <select asp-for="driverId" asp-items="ViewBag.Drivers" class="form-control">
+                    <option value="">-- Select Available Driver --</option>
+                </select>
+                <span asp-validation-for="driverId" class="text-danger"></span>
             </div>
         </div>
+
         <div class="form-row">
-            <div class="form-group col-6">
+            <div class="form-group col-md-6">
                 <label asp-for="origin">Origin</label>
-                <input asp-for="origin" class="form-control" placeholder="Starting location" />
-                <span asp-validation-for="origin" class="field-error"></span>
+                <input asp-for="origin" class="form-control" placeholder="Starting point" />
+                <span asp-validation-for="origin" class="text-danger"></span>
             </div>
-            <div class="form-group col-6">
+            <div class="form-group col-md-6">
                 <label asp-for="destination">Destination</label>
-                <input asp-for="destination" class="form-control" placeholder="End location" />
-                <span asp-validation-for="destination" class="field-error"></span>
+                <input asp-for="destination" class="form-control" placeholder="End point" />
+                <span asp-validation-for="destination" class="text-danger"></span>
             </div>
         </div>
+
         <div class="form-group">
-            <label asp-for="plannedRoute">Planned Route (Description)</label>
-            <textarea asp-for="plannedRoute" class="form-control" rows="3" placeholder="Describe the planned route..."></textarea>
+            <label asp-for="plannedRoute">Route Details</label>
+            <textarea asp-for="plannedRoute" class="form-control" rows="2"></textarea>
         </div>
-        <div class="form-group col-4">
-            <label asp-for="tripStatus">Status</label>
-            <select asp-for="tripStatus" class="form-control" asp-items="Html.GetEnumSelectList<TransportationManagement.Models.TripStatus>()"></select>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Create Trip</button>
+
+        <div class="form-actions mt-3">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Plan Trip</button>
             <a asp-action="Index" class="btn btn-secondary">Cancel</a>
         </div>
     </form>

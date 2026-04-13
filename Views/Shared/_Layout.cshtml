@@ -3,129 +3,469 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Transportation Management</title>
+    <title>@ViewData["Title"] - TransportMS</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Premium Palette */
+            --bg-body: burlywood;
+            --bg-sidebar: rgba(15, 19, 26, 0.8);
+            --bg-card: rgba(25, 30, 41, 0.6);
+            --accent: #6366f1; /* Modern Indigo */
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            
+            /* Text colors */
+            --text-primary: black;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            /* UI Elements */
+            --border: rgba(255, 255, 255, 0.08);
+            --sidebar-width: 280px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            --success: #10b981;
+            --danger: #ef4444;
+        }
 
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* ── SIDEBAR ── */
+        #sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: transform var(--transition);
+        }
+
+        .sidebar-header {
+            padding: 32px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-size: 18px;
+            color: #fff;
+            box-shadow: 0 8px 20px var(--accent-glow);
+        }
+
+        .logo-text {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 24px 16px;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 20px 12px 10px;
+        }
+
+        .nav-item { list-style: none; margin-bottom: 4px; }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+            box-shadow: inset 0 0 0 1px var(--border);
+        }
+
+        .nav-link i {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        .nav-link.active i { opacity: 1; }
+
+        /* ── USER CARD ── */
+        .sidebar-footer {
+            padding: 20px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            background: var(--accent-gradient);
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.1);
+            border: none;
+            color: var(--danger);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .logout-btn:hover {
+            background: var(--danger);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* ── MAIN CONTENT ── */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(8, 10, 15, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .content-area {
+            padding: 40px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── ALERTS ── */
+        .alert {
+            margin: 20px 40px 0;
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        /* ── RESPONSIVE ── */
+        @@media (max-width: 1024px) {
+            :root { --sidebar-width: 0px; }
+            #sidebar { transform: translateX(-100%); width: 280px; }
+            #sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .sidebar-toggle { display: flex !important; }
+        }
+
+        .sidebar-toggle {
+            display: none;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 99;
+            display: none;
+        }
+        .sidebar-overlay.open { display: block; }
+    </style>
 </head>
 <body>
+
     @if (User.Identity != null && User.Identity.IsAuthenticated)
     {
-        <div class="wrapper">
-            <!-- Sidebar -->
-            <nav class="sidebar" id="sidebar">
-                <div class="sidebar-header">
-                    <div class="logo">
-                        @* <i class="fas fa-truck-moving"></i> *@
-                        <span>TransportMS</span>
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <a class="logo" href="#">
+                    <div class="logo-icon">
+                        <i class="fas fa-truck-moving"></i>
                     </div>
-                </div>
-                <ul class="sidebar-nav">
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")" asp-controller="Admin" asp-action="Dashboard">
-                                @* <i class="fas fa-tachometer-alt"></i> *@
-                                <span>Dashboard</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")" asp-controller="Admin" asp-action="Users">
-                                @* <i class="fas fa-users-cog"></i> *@
-                                <span>Manage Users</span>
-                            </a>
-                        </li>
-                    }
-                    @if (User.IsInRole("Admin") || User.IsInRole("FleetManager"))
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vehicle" ? "active" : "")" asp-controller="Vehicle" asp-action="Index">
-                                @* <i class="fas fa-car"></i> *@
-                                <span>Vehicles</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Driver" ? "active" : "")" asp-controller="Driver" asp-action="Index">
-                                @* <i class="fas fa-id-card"></i> *@
-                                <span>Drivers</span>
-                            </a>
-                        </li>
-                    }
+                    <span class="logo-text">Transport<span>MS</span></span>
+                </a>
+            </div>
 
-                    @if (User.IsInRole("Driver"))
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Driver" ? "active" : "")"
-                                   asp-controller="Driver" asp-action="Dashboard">
-                                <span>Dashboard</span>
-                            </a>
-                        </li>
-                    }
+            <ul class="sidebar-nav">
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="nav-label">Administration</div>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")"
+                           asp-controller="Admin" asp-action="Dashboard">
+                            <i class="fas fa-columns"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Users" ? "active" : "")"
+                           asp-controller="Admin" asp-action="Users">
+                            <i class="fas fa-user-shield"></i> Manage Users
+                        </a>
+                    </li>
+                }
 
-                    @if (User.IsInRole("Admin") || User.IsInRole("FleetManager") || User.IsInRole("Driver"))
-                    { 
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Trip" ? "active" : "")" asp-controller="Trip" asp-action="Index">
-                                @* <i class="fas fa-route"></i> *@
-                                <span>Trips</span>
-                            </a>
-                        </li>
-                    }
-                    @if (User.IsInRole("Admin") || User.IsInRole("MaintenanceEngineer") || User.IsInRole("FleetManager"))
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Maintenance" ? "active" : "")" asp-controller="Maintenance" asp-action="Index">
-                                @* <i class="fas fa-wrench"></i> *@
-                                <span>Maintenance</span>
-                            </a>
-                        </li>
-                    }
-                    @if (User.IsInRole("Admin") || User.IsInRole("FleetManager"))
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Fuel" ? "active" : "")" asp-controller="Fuel" asp-action="Index">
-                                @* <i class="fas fa-gas-pump"></i> *@
-                                <span>Fuel</span>
-                            </a>
-                        </li>
-                    }
-                </ul>
-                <div class="sidebar-footer">
-                    @* <span class="user-info"><i class="fas fa-user-circle"></i> @User.Identity.Name</span> *@
+                @if (User.IsInRole("Admin") || User.IsInRole("FleetManager"))
+                {
+                    <div class="nav-label">Fleet Operations</div>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Vehicle" ? "active" : "")"
+                           asp-controller="Vehicle" asp-action="Index">
+                            <i class="fas fa-bus"></i> Vehicles
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Driver" ? "active" : "")"
+                           asp-controller="Driver" asp-action="Index">
+                            <i class="fas fa-address-book"></i> Drivers
+                        </a>
+                    </li>
+                }
+
+                @if (User.IsInRole("Driver"))
+                {
+                    <div class="nav-label">Overview</div>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Driver" && ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")"
+                           asp-controller="Driver" asp-action="Dashboard">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                }
+
+                @if (User.IsInRole("Admin") || User.IsInRole("FleetManager") || User.IsInRole("Driver"))
+                {
+                    <div class="nav-label">Logistics</div>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Trip" ? "active" : "")"
+                           asp-controller="Trip" asp-action="Index">
+                            <i class="fas fa-map-marked-alt"></i> Trips
+                        </a>
+                    </li>
+                }
+
+                @if (User.IsInRole("Admin") || User.IsInRole("MaintenanceEngineer") || User.IsInRole("FleetManager"))
+                {
+                    <div class="nav-label">Systems</div>
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Maintenance" ? "active" : "")"
+                           asp-controller="Maintenance" asp-action="Index">
+                            <i class="fas fa-tools"></i> Maintenance
+                        </a>
+                    </li>
+                }
+
+                @if (User.IsInRole("Admin") || User.IsInRole("FleetManager"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Fuel" ? "active" : "")"
+                           asp-controller="Fuel" asp-action="Index">
+                            <i class="fas fa-fill-drip"></i> Fuel Tracking
+                        </a>
+                    </li>
+                }
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">@User.Identity.Name</div>
+                        <div class="user-role">System User</div>
+                    </div>
                     <form asp-controller="Account" asp-action="Logout" method="post">
-                        <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                        <button type="submit" class="logout-btn">
+                            <i class="fas fa-power-off"></i>
+                        </button>
                     </form>
                 </div>
-            </nav>
+            </div>
+        </nav>
 
-            <!-- Main Content -->
-            <div class="main-content">
-                <div class="top-bar">
-                    <button class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                    <h1 class="page-title">@ViewData["Title"]</h1>
+        <div class="main-content">
+            <div class="top-bar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">@ViewData["Title"]</h1>
+            </div>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> @TempData["Success"]
                 </div>
+            }
 
-                @if (TempData["Success"] != null)
-                {
-                    <div class="alert alert-success"><i class="fas fa-check-circle"></i> @TempData["Success"]</div>
-                }
-                @if (TempData["Error"] != null)
-                {
-                    <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> @TempData["Error"]</div>
-                }
-
-                <div class="content-area">
-                    @RenderBody()
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">
+                    <i class="fas fa-circle-exclamation"></i> @TempData["Error"]
                 </div>
+            }
+
+            <div class="content-area">
+                @RenderBody()
             </div>
         </div>
     }
+
     else
     {
         @RenderBody()
     }
 
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

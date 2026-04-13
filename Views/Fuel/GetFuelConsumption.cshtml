@@ -1,18 +1,44 @@
 @model IEnumerable<TransportationManagement.Models.FuelEntry>
-@{ ViewData["Title"] = "Fuel Consumption"; }
+@{
+    ViewData["Title"] = "Vehicle Fuel History";
+}
+
 <div class="page-header">
-    <h2><i class="fas fa-gas-pump"></i> Vehicle Fuel Consumption</h2>
-    <a asp-action="Index" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back</a>
+    <h2><i class="fas fa-gas-pump"></i> Fuel History for Vehicle ID: @ViewBag.VehicleId</h2>
+    <a asp-action="Index" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to All Entries</a>
 </div>
+
 <div class="card">
-    <table class="table table-hover">
-        <thead><tr><th>#</th><th>Quantity (L)</th><th>Cost (₹)</th><th>Odometer</th><th>Date</th></tr></thead>
-        <tbody>
-        @{ int i=1; }
-        @foreach(var f in Model){
-            <tr><td>@i++</td><td>@f.fuelQuantity</td><td>₹@f.fuelCost</td><td>@f.odometerReading km</td><td>@f.entryDate.ToString("dd MMM yyyy")</td></tr>
-        }
-        @if(!Model.Any()){<tr><td colspan="5" class="text-center empty-row">No fuel data found.</td></tr>}
-        </tbody>
-    </table>
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Quantity (L)</th>
+                    <th>Cost (₹)</th>
+                    <th>Odometer Reading</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int i = 1;
+                }
+                @foreach (var f in Model)
+                {
+                    <tr>
+                        <td>@i++</td>
+                        <td><strong>@f.fuelQuantity</strong></td>
+                        <td>₹@f.fuelCost.ToString("N2")</td>
+                        <td>@f.odometerReading km</td>
+                        <td>@f.entryDate.ToString("dd MMM yyyy")</td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" class="text-center py-4">No fuel consumption data recorded for this vehicle.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>

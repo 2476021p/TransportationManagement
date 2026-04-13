@@ -2,17 +2,13 @@
 @{
     ViewData["Title"] = "Vehicles";
 }
-
 <div class="page-header">
     <h2><i class="fas fa-car"></i> Fleet Vehicles</h2>
     @if (User.IsInRole("FleetManager"))
     {
-        
         <a asp-action="AddVehicle" class="btn btn-primary"><i class="fas fa-plus"></i> Add Vehicle</a>
     }
- 
 </div>
-
 <div class="card">
     <div class="table-search">
         <input type="text" id="searchInput" class="form-control" placeholder="Search vehicles..." onkeyup="searchTable()" />
@@ -20,7 +16,7 @@
     <table class="table table-hover" id="mainTable">
         <thead>
             <tr>
-                <th>#</th>
+                <th>S.No</th>
                 <th>Vehicle Number</th>
                 <th>Model</th>
                 <th>Capacity</th>
@@ -29,47 +25,34 @@
             </tr>
         </thead>
         <tbody>
-            @{ int i = 1; }
+            @{
+                int i = 1;
+            }
             @foreach (var v in Model)
             {
                 <tr>
                     <td>@i</td>
+                    @{
+                        i++;
+                    }
                     <td><strong>@v.vehicleNumber</strong></td>
                     <td>@v.model</td>
                     <td>@v.capacity</td>
                     <td>
                         <form asp-action="UpdateStatus" method="post" style="display:inline;">
-        
                             <input type="hidden" name="id" value="@v.vehicleId" />
- 
-                            <select name="status" class="form-control"
-                                    onchange="this.form.submit()">
- 
-                                <option value="ACTIVE" selected="@(v.status == VehicleStatus.ACTIVE)">
-                                    Active
-                                </option>
- 
-                                <option value="IN_SERVICE" selected="@(v.status == VehicleStatus.IN_SERVICE)">
-                                    In Service
-                                </option>
- 
-                                <option value="RETIRED" selected="@(v.status == VehicleStatus.RETIRED)">
-                                    Retired
-                                </option>
-
-                                <option value="RETIRED" selected="@(v.status == VehicleStatus.ON_TRIP)">
-                                    On Trip
-                                </option>
- 
+                            <select name="status" class="form-control" onchange="this.form.submit()">
+                                <option value="ACTIVE" selected="@(v.status == VehicleStatus.ACTIVE)">Active</option>
+                                <option value="IN_SERVICE" selected="@(v.status == VehicleStatus.IN_SERVICE)">In Service</option>
+                                <option value="RETIRED" selected="@(v.status == VehicleStatus.RETIRED)">Retired</option>
+                                <option value="ON_TRIP" selected="@(v.status == VehicleStatus.ON_TRIP)">On Trip</option>
                             </select>
- 
                         </form>
                     </td>
                     <td class="action-btns">
                         <a asp-action="GetVehicleDetails" asp-route-id="@v.vehicleId" class="btn btn-sm btn-info" title="Details">
                             <i class="fas fa-eye"></i>
                         </a>
-
                         @if (User.IsInRole("FleetManager"))
                         {
                             <a asp-action="UpdateVehicle" asp-route-id="@v.vehicleId" class="btn btn-sm btn-warning" title="Edit">
@@ -81,10 +64,6 @@
                         }
                     </td>
                 </tr>
-            }
-            @if (!Model.Any())
-            {
-                <tr><td colspan="6" class="text-center empty-row">No vehicles registered yet.</td></tr>
             }
         </tbody>
     </table>

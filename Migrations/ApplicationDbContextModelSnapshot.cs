@@ -235,6 +235,15 @@ namespace TransportationManagement.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("driverId"));
 
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("contactNumber")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -284,6 +293,9 @@ namespace TransportationManagement.Migrations
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("odometerReading")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("tripId")
                         .HasColumnType("int");
 
                     b.Property<int>("vehicleId")

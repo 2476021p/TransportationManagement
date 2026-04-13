@@ -33,14 +33,16 @@
                     <input asp-for="Password" class="form-control" placeholder="Enter your password" />
                     <span asp-validation-for="Password" class="field-error"></span>
                 </div>
-                <div class="form-check">
-                    <input asp-for="RememberMe" type="checkbox" />
-                    <label asp-for="RememberMe">Remember Me</label>
-                </div>
                 <button type="submit" class="btn btn-primary btn-block">
                     <i class="fas fa-sign-in-alt"></i> Sign In
                 </button>
             </form>
+            @* @if (ViewBag.LoginSuccess != null)
+            {
+                <script>
+                                alert("✔ Login Successful");
+                </script>
+            } *@
             @* <div class="login-hint">
                 <small>Default Admin: admin@transport.com / Admin@123</small>
             </div> *@

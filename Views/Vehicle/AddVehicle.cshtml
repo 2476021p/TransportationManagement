@@ -10,36 +10,52 @@
 
 <div class="card form-card">
     <form asp-action="AddVehicle" method="post">
-        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        @Html.AntiForgeryToken()
+        
+        <div asp-validation-summary="ModelOnly" class="validation-summary text-danger"></div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+
         <div class="form-row">
             <div class="form-group col-6">
                 <label asp-for="vehicleNumber">Vehicle Number</label>
                 <input asp-for="vehicleNumber" class="form-control" placeholder="e.g. TN01AB1234" />
-                <span asp-validation-for="vehicleNumber" class="field-error"></span>
+                <span asp-validation-for="vehicleNumber" class="field-error text-danger"></span>
             </div>
             <div class="form-group col-6">
                 <label asp-for="model">Model</label>
                 <input asp-for="model" class="form-control" placeholder="e.g. Tata Ace" />
-                <span asp-validation-for="model" class="field-error"></span>
+                <span asp-validation-for="model" class="field-error text-danger"></span>
             </div>
         </div>
+
         <div class="form-row">
             <div class="form-group col-6">
-                <label asp-for="capacity">Capacity</label>
+                <label asp-for="capacity">Capacity (Tons/Seats)</label>
                 <input asp-for="capacity" type="number" class="form-control" placeholder="e.g. 10" />
-                <span asp-validation-for="capacity" class="field-error"></span>
+                <span asp-validation-for="capacity" class="field-error text-danger"></span>
             </div>
             <div class="form-group col-6">
-                <label asp-for="status">Status</label>
+                <label asp-for="status">Initial Status</label>
                 <select asp-for="status" class="form-control"
                         asp-items="Html.GetEnumSelectList<TransportationManagement.Models.VehicleStatus>()">
                 </select>
-                <span asp-validation-for="status" class="field-error"></span>
+                <span asp-validation-for="status" class="field-error text-danger"></span>
             </div>
         </div>
-        <div class="form-actions">
+
+        <div class="form-actions mt-3">
             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Vehicle</button>
             <a asp-action="Index" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TransportationManagement.Data;
-using TransportationManagement.Migrations;
 using TransportationManagement.Models;
 using TransportationManagement.Services;
 
@@ -13,154 +11,35 @@ namespace TransportationManagement.Controllers
 	public class DriverController : Controller
 	{
 		private readonly DriverService _driverService;
-		private readonly TripService _tripService;
-		private readonly UserManager<ApplicationUser> _userManager;
 		private readonly ApplicationDbContext _context;
 
-		public DriverController(
-			DriverService driverService,
-			TripService tripService,
-			UserManager<ApplicationUser> userManager,
-			ApplicationDbContext context)
+		public DriverController(DriverService driverService, ApplicationDbContext context)
 		{
 			_driverService = driverService;
-			_tripService = tripService;
-			_userManager = userManager;
 			_context = context;
 		}
 
-		
+	
 		[Authorize(Roles = "Admin,FleetManager")]
+		[HttpGet]
 		public async Task<IActionResult> Index()
 		{
 			try
 			{
-				var drivers = await _driverService.GetAllDriversAsync();
+				var drivers = await _driverService.ListAllDriversAsync();
 				return View(drivers);
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while loading drivers: " + ex.Message;
+				TempData["Error"] = "Error loading drivers: " + ex.Message;
 				return View(new List<Driver>());
 			}
 		}
 
-		
-		[Authorize(Roles = "FleetManager")]
-		public IActionResult Create()
-		{
-			try
-			{
-				return View();
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while loading the create page: " + ex.Message;
-				return RedirectToAction(nameof(Index));
-			}
-		}
-
-		
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		[Authorize(Roles = "FleetManager")]
-		public async Task<IActionResult> Create(Driver driver, string email, string password)
-		{
-			try
-			{
-				ModelState.Remove("User");
-				ModelState.Remove("UserId");
-				ModelState.Remove("Trips");
-
-				
-				if (!ModelState.IsValid)
-				{
-					var modelErrors = string.Join(" | ", ModelState.Values
-						.SelectMany(v => v.Errors)
-						.Select(e => e.ErrorMessage));
-					TempData["Error"] = "Failed: " + modelErrors;
-					return View(driver);
-				}
-
-				
-				if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-				{
-					TempData["Error"] = "Email and Password are required.";
-					return View(driver);
-				}
-
-			
-				var existingUser = await _userManager.FindByEmailAsync(email);
-				if (existingUser != null)
-				{
-					TempData["Error"] = "A user with this email already exists.";
-					return View(driver);
-				}
-
-				
-				var drivers = await _driverService.GetAllDriversAsync();
-				if (drivers.Any(d => d.contactNumber == driver.contactNumber))
-				{
-					TempData["Error"] = "Contact number already exists!";
-					return View(driver);
-				}
-
-
-				if (drivers.Any(d => d.licenseNumber == driver.licenseNumber))
-				{
-					TempData["Error"] = "License number already exists!";
-					return View(driver);
-				}
-
-			
-				driver.status = DriverStatus.AVAILABLE;
-				await _driverService.AddDriverAsync(driver);
-
-				var user = new ApplicationUser
-				{
-					UserName = email,
-					Email = email
-				};
-
-				var result = await _userManager.CreateAsync(user, password);
-
-				if (result.Succeeded)
-				{
-					
-					await _userManager.AddToRoleAsync(user, "Driver");
-
-					
-					var savedDriver = await _context.Drivers
-						.OrderByDescending(d => d.driverId)
-						.FirstOrDefaultAsync();
-
-					if (savedDriver != null)
-					{
-						savedDriver.userId = user.Id;
-						await _driverService.UpdateDriverAsync(savedDriver);
-					}
-
-					TempData["Success"] = "Driver created successfully!";
-					return RedirectToAction(nameof(Index));
-				}
-				else
-				{
-					
-					await _driverService.DeleteDriverAsync(driver.driverId);
-					var identityErrors = string.Join(" | ", result.Errors.Select(e => e.Description));
-					TempData["Error"] = "Account creation failed: " + identityErrors;
-					return View(driver);
-				}
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An unexpected error occurred while creating the driver: " + ex.Message;
-				return View(driver);
-			}
-		}
-
-		[Authorize(Roles = "FleetManager")]
-		public async Task<IActionResult> Edit(int id)
+		// --- 2. DRIVER DETAILS (Admin/FleetManager) ---
+		[Authorize(Roles = "Admin,FleetManager")]
+		[HttpGet]
+		public async Task<IActionResult> GetDriverDetails(int id)
 		{
 			try
 			{
@@ -170,158 +49,19 @@ namespace TransportationManagement.Controllers
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while loading the edit page: " + ex.Message;
+				TempData["Error"] = "Error retrieving driver details: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
-		[HttpPost]
-		[Authorize(Roles = "FleetManager")]
-		public async Task<IActionResult> Edit(Driver driver)
-		{
-			try
-			{
-				if (!ModelState.IsValid)
-					return View(driver);
-
-				_context.Update(driver);
-				await _context.SaveChangesAsync();
-				return RedirectToAction(nameof(Index));
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while updating the driver: " + ex.Message;
-				return View(driver);
-			}
-		}
-
-		
-		[HttpPost]
-		[Authorize(Roles = "FleetManager")]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Delete(int id)
-		{
-			try
-			{
-				var driver = await _driverService.GetDriverByIdAsync(id);
-				if (driver == null)
-				{
-					TempData["Error"] = "Driver not found.";
-					return RedirectToAction(nameof(Index));
-				}
-
-			
-				var activeTrip = await _context.Trips
-					.FirstOrDefaultAsync(t => t.driverId == id &&
-											  t.tripStatus == TripStatus.IN_PROGRESS);
-				if (activeTrip != null)
-				{
-					TempData["Error"] = $"Cannot delete '{driver.name}' - Driver is currently on a trip!";
-					return RedirectToAction(nameof(Index));
-				}
-
-				
-				if (driver.userId != null)
-				{
-					var user = await _userManager.FindByIdAsync(driver.userId);
-					if (user != null)
-						await _userManager.DeleteAsync(user);
-				}
-
-				await _driverService.DeleteDriverAsync(id);
-				TempData["Success"] = $"Driver '{driver.name}' deleted successfully!";
-				return RedirectToAction(nameof(Index));
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while deleting the driver: " + ex.Message;
-				return RedirectToAction(nameof(Index));
-			}
-		}
-
-		
-		public async Task<IActionResult> Dashboard()
-		{
-			try
-			{
-				var driverIdString = HttpContext.Session.GetString("DriverId");
-				if (string.IsNullOrEmpty(driverIdString))
-					return RedirectToAction("Login", "Account");
-
-				int driverId = int.Parse(driverIdString);
-
-				var trips = await _context.Trips
-					.Include(t => t.Vehicle)
-					.Where(t => t.driverId == driverId)
-					.ToListAsync();
-
-				return View(trips);
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while loading the dashboard: " + ex.Message;
-				return View(new List<Trip>());
-			}
-		}
-
-		
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> StartTrip(int id)
-		{
-			try
-			{
-				var driverIdString = HttpContext.Session.GetString("DriverId");
-				if (string.IsNullOrEmpty(driverIdString))
-					return RedirectToAction("Login", "Account");
-
-				var trip = await _context.Trips
-					.Include(t => t.Vehicle)
-					.Include(t => t.Driver)
-					.FirstOrDefaultAsync(t => t.tripId == id);
-
-				if (trip == null)
-					return NotFound();
-
-				
-				trip.tripStatus = TripStatus.IN_PROGRESS;
-
-				
-				trip.startDateTime = DateTime.Now;
-
-				
-				if (trip.Driver != null)
-					trip.Driver.status = DriverStatus.ON_TRIP;
-
-				
-				if(trip.Vehicle != null)
-
-					trip.Vehicle.status = VehicleStatus.IN_SERVICE;
-
-				await _context.SaveChangesAsync();
-
-				TempData["success"] = "Trip started! Drive safe!";
-				return RedirectToAction("Dashboard");
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while starting the trip: " + ex.Message;
-				return RedirectToAction("Dashboard");
-			}
-		}
-
+		// --- 3. GET ASSIGNED TRIPS (Driver self) ---
 		[HttpGet]
-		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> GetAssignedTrips(int id)
 		{
 			try
 			{
-				var trips = await _context.Trips
-					.Include(t => t.Vehicle)
-					.Include(t => t.Driver)
-					.Where(t => t.driverId == id)
-					.ToListAsync();
-
+				var trips = await _driverService.GetDriverDashboardDataAsync(id);
+				ViewBag.DriverId = id;
 				return View(trips);
 			}
 			catch (Exception ex)
@@ -331,18 +71,192 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
+		// --- 4. CREATE DRIVER (GET) ---
+		[Authorize(Roles = "FleetManager")]
 		[HttpGet]
-		[Authorize(Roles = "Admin,FleetManager")]
-		public async Task<IActionResult> GetDriverDetails(int id)
+		public IActionResult Create() => View();
+
+		// --- 5. CREATE DRIVER (POST) ---
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "FleetManager")]
+		public async Task<IActionResult> Create(Driver driver, string email, string password)
 		{
-			var driver = await _context.Drivers.FirstOrDefaultAsync(d => d.driverId == id);
+			try
+			{
+				// Exclude navigation properties from validation
+				ModelState.Remove("User");
+				ModelState.Remove("UserId");
+				ModelState.Remove("Trips");
+				ModelState.Remove("MaintenanceRecords");
+				ModelState.Remove("FuelEntries");
 
-			if (driver == null)
-				return NotFound();
+				if (!ModelState.IsValid) return View(driver);
 
+				// FIX: Use CreateDriverAsync, not UpdateDriverAsync
+				var result = await _driverService.CreateDriverAsync(driver, email, password);
+
+				if (result.Success)
+				{
+					TempData["Success"] = result.Message;
+					return RedirectToAction(nameof(Index));
+				}
+				else
+				{
+					TempData["Error"] = result.Message;
+					return View(driver);
+				}
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "Critical error during creation: " + ex.Message;
+				return View(driver);
+			}
+		}
+
+		// --- 6. DRIVER DASHBOARD (Self) ---
+		[HttpGet]
+		public async Task<IActionResult> Dashboard()
+		{
+			try
+			{
+				var driverIdStr = HttpContext.Session.GetString("DriverId");
+
+				if (string.IsNullOrEmpty(driverIdStr))
+				{
+					return RedirectToAction("Login", "Account");
+				}
+
+				var trips = await _driverService.GetDriverDashboardDataAsync(
+					int.Parse(driverIdStr));
+				return View(trips);
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "Could not load dashboard: " + ex.Message;
+				return RedirectToAction("Login", "Account");
+			}
+		}
+
+		// --- 7. EDIT DRIVER (GET) ---
+		[Authorize(Roles = "FleetManager")]
+		[HttpGet]
+		public async Task<IActionResult> Edit(int id)
+		{
+			var driver = await _driverService.GetDriverByIdAsync(id);
+			if (driver == null) return NotFound();
 			return View(driver);
 		}
 
+		// --- 7. EDIT DRIVER (POST) ---
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "FleetManager")]
+		public async Task<IActionResult> Edit(int id, Driver driver)
+		{
+			if (id != driver.driverId) return NotFound();
+
+			ModelState.Remove("User");
+			ModelState.Remove("UserId");
+
+			if (!ModelState.IsValid) return View(driver);
+
+			var result = await _driverService.UpdateDriverAsync(driver);
+			if (result.Success)
+			{
+				TempData["Success"] = result.Message;
+				return RedirectToAction(nameof(Index));
+			}
+
+			TempData["Error"] = result.Message;
+			return View(driver);
+		}
+
+		// --- 8. DELETE DRIVER ---
+		[HttpPost]
+		[Authorize(Roles = "FleetManager")]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Delete(int id)
+		{
+			var result = await _driverService.DeleteDriverAsync(id);
+			if (result.Success)
+				TempData["Success"] = result.Message;
+			else
+				TempData["Error"] = result.Message;
+
+			return RedirectToAction(nameof(Index));
+		}
+
+		// --- 9. START TRIP ---
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Driver")]
+		public async Task<IActionResult> StartTrip(Trip newTrip)
+		{
+			try
+			{
+				// 🔹 Get driver & vehicle
+				var driver = await _context.Drivers.FindAsync(newTrip.driverId);
+				var vehicle = await _context.Vehicles.FindAsync(newTrip.vehicleId);
+
+				if (driver == null || vehicle == null)
+					return NotFound();
+
+				// 🔴 1. CHECK: Driver already has active trip
+				var existingTrip = await _context.Trips
+					.FirstOrDefaultAsync(t => t.driverId == newTrip.driverId
+										  && t.tripStatus == TripStatus.IN_PROGRESS);
+
+				if (existingTrip != null)
+				{
+					TempData["Error"] = "Driver already has an active trip!";
+					return RedirectToAction("Dashboard");
+				}
+
+				// 🔴 2. CHECK: Driver status
+				if (driver.status == DriverStatus.ON_TRIP)
+				{
+					TempData["Error"] = "Driver is already on another trip!";
+					return RedirectToAction("Dashboard");
+				}
+
+				// 🔴 3. CHECK: Vehicle availability
+				if (vehicle.status == VehicleStatus.ON_TRIP
+					|| vehicle.status == VehicleStatus.IN_SERVICE)
+				{
+					TempData["Error"] = "Vehicle is not available!";
+					return RedirectToAction("Dashboard");
+				}
+
+				// 🔴 4. CHECK: Fuel
+				double requiredFuel = 20;
+
+				if (vehicle.currentfuel < requiredFuel)
+				{
+					TempData["Error"] = "Minimum  fuel required to start the trip!";
+					return RedirectToAction("AddFuelEntry", "Fuel",
+						new { vehicleId = vehicle.vehicleId });
+				}
+
+				// ✅ 5. START TRIP
+				driver.status = DriverStatus.ON_TRIP;
+				vehicle.status = VehicleStatus.ON_TRIP;
+
+				newTrip.tripStatus = TripStatus.IN_PROGRESS;
+				newTrip.startDateTime = DateTime.Now;
+
+				_context.Trips.Add(newTrip);
+				await _context.SaveChangesAsync();
+
+				TempData["Success"] = "Trip started successfully!";
+				return RedirectToAction("Dashboard");
+			}
+			catch (Exception ex)
+			{
+				TempData["Error"] = "Error starting trip: " + ex.Message;
+				return RedirectToAction("Dashboard");
+			}
+		}
 
 	}
 }

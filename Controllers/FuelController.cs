@@ -14,15 +14,16 @@ namespace TransportationManagement.Controllers
 		private readonly FuelService _fuelService;
 		private readonly VehicleService _vehicleService;
 		private readonly ApplicationDbContext _context;
-
-		public FuelController(FuelService fuelService, VehicleService vehicleService, ApplicationDbContext context)
+		public FuelController(
+			FuelService fuelService,
+			VehicleService vehicleService, ApplicationDbContext context)
 		{
 			_fuelService = fuelService;
 			_vehicleService = vehicleService;
 			_context = context;
 		}
 
-		// GET: Fuel
+		// --- 1. INDEX ---
 		public async Task<IActionResult> Index()
 		{
 			try
@@ -32,12 +33,13 @@ namespace TransportationManagement.Controllers
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while loading fuel entries: " + ex.Message;
+				TempData["Error"] = "Error loading fuel entries: " + ex.Message;
 				return View(new List<FuelEntry>());
 			}
 		}
 
-	     
+		// --- 2. ADD FUEL ENTRY (GET) ---
+		[HttpGet]
 		public async Task<IActionResult> AddFuelEntry()
 		{
 			try
@@ -47,86 +49,82 @@ namespace TransportationManagement.Controllers
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while loading the add fuel entry page: " + ex.Message;
+				TempData["Error"] = "Error initializing form: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
+		// --- 3. ADD FUEL ENTRY (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> AddFuelEntry(FuelEntry fuelEntry)
 		{
 			try
 			{
+				// Remove navigation validation issue
+				ModelState.Remove("Vehicle");
+
 				if (!ModelState.IsValid)
 				{
 					await PopulateVehicles();
 					return View(fuelEntry);
 				}
 
-				
-				var vehicle = await _context.Vehicles
-					.FirstOrDefaultAsync(v => v.vehicleId == fuelEntry.vehicleId);
+				// 🔥 Get vehicle
+				var vehicle = await _context.Vehicles.FindAsync(fuelEntry.vehicleId);
 
 				if (vehicle == null)
 				{
-					ModelState.AddModelError("", "Vehicle not found.");
-					await PopulateVehicles();
-					return View(fuelEntry);
+					TempData["Error"] = "Vehicle not found!";
+					return RedirectToAction("Dashboard", "Driver");
 				}
 
-				
-				_context.FuelEntries.Add(fuelEntry);
+				// ✅ SAVE FUEL ENTRY
+				await _fuelService.AddFuelEntryAsync(fuelEntry);
 
-			
+				// 🔥 UPDATE CURRENT FUEL
 				vehicle.currentfuel += (double)fuelEntry.fuelQuantity;
 
-				
 				await _context.SaveChangesAsync();
 
-				TempData["Success"] = "Fuel entry added successfully!";
-				return RedirectToAction("Dashboard","Driver");
+				TempData["Success"] = "Fuel added successfully!";
+
+				return RedirectToAction("Dashboard", "Driver");
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "Error while adding fuel: " + ex.Message;
+				TempData["Error"] = "Error adding fuel entry: " + ex.Message;
+
 				await PopulateVehicles();
 				return View(fuelEntry);
 			}
 		}
 
 
-		public async Task<IActionResult> GetFuelConsumption(int vehicleId)
-		{
-			try
-			{
-				var entries = await _fuelService.GetFuelConsumptionAsync(vehicleId);
-				ViewBag.VehicleId = vehicleId;
-				return View(entries);
-			}
-			catch (Exception ex)
-			{
-				TempData["Error"] = "An error occurred while loading fuel consumption: " + ex.Message;
-				return RedirectToAction(nameof(Index));
-			}
-		}
-
-	
-		public async Task<IActionResult> GenerateFuelReport()
+		// --- 4. GENERATE FUEL REPORT ---
+		[HttpGet]
+		[Authorize(Roles = "Admin,FleetManager")]
+		public async Task<IActionResult> GenerateFuelReport(int? vehicleId)
 		{
 			try
 			{
 				var report = await _fuelService.GenerateFuelReportAsync();
+				if (vehicleId != null)
+					report = report.Where(f => f.vehicleId == vehicleId).ToList();
+
+				ViewBag.Vehicles = await _vehicleService.ListAllVehiclesAsync();
 				return View(report);
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while generating the fuel report: " + ex.Message;
+				TempData["Error"] = "Error generating report: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
-		
+		// --- 5. EDIT (GET) ---
+		[HttpGet]
+		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> Edit(int id)
 		{
 			try
@@ -138,19 +136,21 @@ namespace TransportationManagement.Controllers
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while loading the fuel entry: " + ex.Message;
+				TempData["Error"] = "Error loading fuel entry: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
-	
+		// --- 6. EDIT (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Edit(int id, FuelEntry fuelEntry)
+		[Authorize(Roles = "Admin,FleetManager")]
+		public async Task<IActionResult> Edit(FuelEntry fuelEntry)
 		{
 			try
 			{
-				if (id != fuelEntry.fuelId) return NotFound();
+				ModelState.Remove("Vehicle");
+
 				if (ModelState.IsValid)
 				{
 					await _fuelService.UpdateFuelEntryAsync(fuelEntry);
@@ -163,13 +163,15 @@ namespace TransportationManagement.Controllers
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while updating the fuel entry: " + ex.Message;
+				TempData["Error"] = "Error updating fuel entry: " + ex.Message;
 				await PopulateVehicles();
 				return View(fuelEntry);
 			}
 		}
 
-		
+		// --- 7. DELETE (GET - Confirmation) ---
+		[HttpGet]
+		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> Delete(int id)
 		{
 			try
@@ -180,40 +182,44 @@ namespace TransportationManagement.Controllers
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while loading the delete page: " + ex.Message;
+				TempData["Error"] = "Error loading delete confirmation: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
-		
+		// --- 8. DELETE CONFIRMED (POST) ---
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			try
 			{
 				await _fuelService.DeleteFuelEntryAsync(id);
-				TempData["Success"] = "Fuel entry deleted.";
+				TempData["Success"] = "Fuel entry deleted successfully.";
 				return RedirectToAction(nameof(Index));
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "An error occurred while deleting the fuel entry: " + ex.Message;
+				TempData["Error"] = "Error deleting fuel entry: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
+		// --- PRIVATE HELPER ---
 		private async Task PopulateVehicles()
 		{
 			try
 			{
 				var vehicles = await _vehicleService.ListAllVehiclesAsync();
-				ViewBag.Vehicles = new SelectList(vehicles, "vehicleId", "vehicleNumber");
+				ViewBag.Vehicles = new SelectList(
+					vehicles, "vehicleId", "vehicleNumber");
 			}
-			catch (Exception ex)
+			catch
 			{
-				TempData["Error"] = "An error occurred while populating vehicles: " + ex.Message;
-				ViewBag.Vehicles = new SelectList(new List<Vehicle>(), "vehicleId", "vehicleNumber");
+				ViewBag.Vehicles = new SelectList(
+					Enumerable.Empty<SelectListItem>());
+				throw;
 			}
 		}
 	}

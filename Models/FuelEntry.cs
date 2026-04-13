@@ -28,5 +28,8 @@ namespace TransportationManagement.Models
         // Navigation property
         [ForeignKey("vehicleId")]
         public Vehicle? Vehicle { get; set; }
-    }
+
+		
+		public int? tripId { get; set; } 
+	}
 }

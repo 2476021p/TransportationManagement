@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TransportationManagement.Data;
 using TransportationManagement.Models;
 using TransportationManagement.Services;
 
@@ -11,17 +9,12 @@ namespace TransportationManagement.Controllers
 	public class VehicleController : Controller
 	{
 		private readonly VehicleService _vehicleService;
-		private readonly ApplicationDbContext _context;
 
-		public VehicleController(
-			VehicleService vehicleService,
-			ApplicationDbContext context)
+		public VehicleController(VehicleService vehicleService)
 		{
 			_vehicleService = vehicleService;
-			_context = context;
 		}
 
-		// GET: Vehicle
 		public async Task<IActionResult> Index()
 		{
 			try
@@ -36,67 +29,53 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// GET: Vehicle/Details/5
-		public async Task<IActionResult> Details(int id)
+		public async Task<IActionResult> GetVehicleDetails(int id)
 		{
 			try
 			{
 				var vehicle = await _vehicleService.GetVehicleDetailsAsync(id);
 				if (vehicle == null) return NotFound();
-				return View(vehicle);
+
+				return View("GetVehicleDetails", vehicle);
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "Error loading vehicle details: " + ex.Message;
+				TempData["Error"] = "Error retrieving vehicle details: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
-		// GET: Vehicle/Create
-		// GET: Vehicle/AddVehicle
 		[HttpGet]
 		public IActionResult AddVehicle()
 		{
-			return View(); // will open AddVehicle.cshtml
+			return View();
 		}
 
-
-		// POST: Vehicle/AddVehicle
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> AddVehicle(Vehicle vehicle)
 		{
 			try
 			{
-				if (ModelState.IsValid)
+				if (!ModelState.IsValid) return View(vehicle);
+
+				var result = await _vehicleService.AddVehicleAsync(vehicle);
+				if (result.Success)
 				{
-					// Check duplicate vehicle number
-					var existingVehicle = await _context.Vehicles
-						.FirstOrDefaultAsync(v => v.vehicleNumber == vehicle.vehicleNumber);
-
-					if (existingVehicle != null)
-					{
-						TempData["Error"] = $"Vehicle number '{vehicle.vehicleNumber}' already exists!";
-						return View(vehicle);
-					}
-
-					// Save vehicle
-					await _vehicleService.AddVehicleAsync(vehicle);
-
-					TempData["Success"] = "Vehicle added successfully!";
+					TempData["Success"] = result.Message;
 					return RedirectToAction(nameof(Index));
 				}
 
+				TempData["Error"] = result.Message;
 				return View(vehicle);
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "Error adding vehicle: " + ex.Message;
+				TempData["Error"] = "An error occurred while adding the vehicle: " + ex.Message;
 				return View(vehicle);
 			}
 		}
 
-		// GET: Vehicle/Edit/5
 		public async Task<IActionResult> UpdateVehicle(int id)
 		{
 			try
@@ -107,12 +86,11 @@ namespace TransportationManagement.Controllers
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "Error loading edit page: " + ex.Message;
+				TempData["Error"] = "Error loading vehicle for update: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
-		// POST: Vehicle/Edit/5
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> UpdateVehicle(int id, Vehicle vehicle)
@@ -120,37 +98,16 @@ namespace TransportationManagement.Controllers
 			try
 			{
 				if (id != vehicle.vehicleId) return NotFound();
+				if (!ModelState.IsValid) return View(vehicle);
 
-				if (ModelState.IsValid)
+				var result = await _vehicleService.UpdateVehicleAsync(vehicle);
+				if (result.Success)
 				{
-					// Check duplicate vehicle number excluding current
-					var existing = await _context.Vehicles
-						.FirstOrDefaultAsync(v =>
-							v.vehicleNumber == vehicle.vehicleNumber &&
-							v.vehicleId != vehicle.vehicleId);
-					if (existing != null)
-					{
-						TempData["Error"] =
-							$"Vehicle number '{vehicle.vehicleNumber}' already exists!";
-						return View(vehicle);
-					}
-
-					// Check duplicate registration excluding current
-					var existingReg = await _context.Vehicles
-						.FirstOrDefaultAsync(v =>
-							v.vehicleNumber == vehicle.vehicleNumber &&
-							v.vehicleId != vehicle.vehicleId);
-					if (existingReg != null)
-					{
-						TempData["Error"] =
-							$"Registration '{vehicle.vehicleNumber}' already exists!";
-						return View(vehicle);
-					}
-
-					await _vehicleService.UpdateVehicleAsync(vehicle);
-					TempData["Success"] = "Vehicle updated successfully.";
+					TempData["Success"] = result.Message;
 					return RedirectToAction(nameof(Index));
 				}
+
+				TempData["Error"] = result.Message;
 				return View(vehicle);
 			}
 			catch (Exception ex)
@@ -160,7 +117,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// ✅ GET: Vehicle/Delete/5 - Confirmation page
 		public async Task<IActionResult> Delete(int id)
 		{
 			try
@@ -171,13 +127,11 @@ namespace TransportationManagement.Controllers
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "Error loading delete page: " + ex.Message;
+				TempData["Error"] = "Error loading delete confirmation: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
 		}
 
-
-		// ✅ POST: Vehicle/Delete/5 - Actual delete
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "FleetManager")]
@@ -185,51 +139,35 @@ namespace TransportationManagement.Controllers
 		{
 			try
 			{
-				var hasTrips = await _context.Trips.AnyAsync(t => t.vehicleId == id);
-				if (hasTrips)
-					return RedirectToAction(nameof(Index));
+				var result = await _vehicleService.DeleteVehicleAsync(id);
+				if (!result.Success)
+					TempData["Error"] = result.Message;
+				else
+					TempData["Success"] = result.Message;
 
-				var hasMaintenance = await _context.MaintenanceRecords.AnyAsync(m => m.vehicleId == id);
-				if (hasMaintenance)
-					return RedirectToAction(nameof(Index));
-
-				await _vehicleService.DeleteVehicleAsync(id);
 				return RedirectToAction(nameof(Index));
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
+				TempData["Error"] = "A system error occurred during deletion: " + ex.Message;
 				return RedirectToAction(nameof(Index));
 			}
-		}
-
-
-		[HttpGet]
-		[Authorize(Roles = "Admin,FleetManager")]
-		public async Task<IActionResult> GetVehicleDetails(int id)
-		{
-			var vehicle = await _context.Vehicles.FirstOrDefaultAsync(v => v.vehicleId == id);
-
-			if (vehicle == null)
-				return NotFound();
-
-			return View(vehicle);
 		}
 
 		[HttpPost]
 		public async Task<IActionResult> UpdateStatus(int id, VehicleStatus status)
 		{
-			var vehicle = await _context.Vehicles.FindAsync(id);
-
-			if (vehicle == null)
+			try
 			{
+				await _vehicleService.UpdateStatusAsync(id, status);
+				TempData["Success"] = "Vehicle status updated successfully.";
 				return RedirectToAction("Index");
 			}
-
-			vehicle.status = status;
-
-			await _context.SaveChangesAsync();
-
-			return RedirectToAction("Index");
+			catch (Exception ex)
+			{
+				TempData["Error"] = "Could not update status: " + ex.Message;
+				return RedirectToAction("Index");
+			}
 		}
 	}
 }

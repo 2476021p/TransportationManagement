@@ -1,90 +1,53 @@
 @model TransportationManagement.Models.Trip
- 
 @{
     ViewData["Title"] = "Update Trip Status";
 }
- 
+
 <div class="container mt-4">
     <div class="card shadow-sm">
         <div class="card-header bg-primary text-white">
-            <h4>Update Trip</h4>
+            <h4><i class="fas fa-edit"></i> Update Trip Management</h4>
         </div>
- 
         <div class="card-body">
- 
-            <!-- ERROR MESSAGE -->
             @if (TempData["Error"] != null)
             {
-                <div class="alert alert-danger">
-                    @TempData["Error"]
-                </div>
+                <div class="alert alert-danger">@TempData["Error"]</div>
             }
- 
-            <!-- FORM -->
+
             <form asp-action="UpdateTripStatus" method="post">
- 
+                @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="tripId" />
- 
+
                 <div class="row">
- 
-                    <!-- VEHICLE -->
                     <div class="form-group col-md-6 mb-3">
                         <label>Vehicle</label>
-                        <select asp-for="vehicleId" asp-items="ViewBag.Vehicles" class="form-control">
-                            <option value="">-- Select Vehicle --</option>
-                        </select>
+                        <select asp-for="vehicleId" asp-items="ViewBag.Vehicles" class="form-control"></select>
                     </div>
- 
-                    <!-- DRIVER -->
                     <div class="form-group col-md-6 mb-3">
                         <label>Driver</label>
-                        <select asp-for="driverId" asp-items="ViewBag.Drivers" class="form-control">
-                            <option value="">-- Select Driver --</option>
-                        </select>
+                        <select asp-for="driverId" asp-items="ViewBag.Drivers" class="form-control"></select>
                     </div>
- 
-                    <!-- ORIGIN -->
                     <div class="form-group col-md-6 mb-3">
                         <label>Origin</label>
                         <input asp-for="origin" class="form-control" />
                     </div>
- 
-                    <!-- DESTINATION -->
                     <div class="form-group col-md-6 mb-3">
                         <label>Destination</label>
                         <input asp-for="destination" class="form-control" />
                     </div>
- 
-                    <!-- ROUTE -->
-                    <div class="form-group col-md-12 mb-3">
-                        <label>Planned Route</label>
-                        <textarea asp-for="plannedRoute" class="form-control"></textarea>
-                    </div>
- 
-                    <!-- STATUS -->
                     <div class="form-group col-md-6 mb-3">
                         <label>Trip Status</label>
                         <select asp-for="tripStatus" class="form-control"
                                 asp-items="Html.GetEnumSelectList<TransportationManagement.Models.TripStatus>()">
                         </select>
                     </div>
- 
                 </div>
- 
-                <!-- BUTTONS -->
+
                 <div class="mt-3">
-                    <button type="submit" class="btn btn-success">
-                        Update Trip
-                    </button>
- 
-                    <a asp-action="Index" class="btn btn-secondary">
-                        Cancel
-                    </a>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Save Changes</button>
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
                 </div>
- 
             </form>
- 
         </div>
     </div>
 </div>
- 

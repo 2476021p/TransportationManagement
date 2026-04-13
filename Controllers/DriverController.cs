@@ -36,7 +36,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 2. DRIVER DETAILS (Admin/FleetManager) ---
+
 		[Authorize(Roles = "Admin,FleetManager")]
 		[HttpGet]
 		public async Task<IActionResult> GetDriverDetails(int id)
@@ -54,7 +54,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 3. GET ASSIGNED TRIPS (Driver self) ---
+
 		[HttpGet]
 		public async Task<IActionResult> GetAssignedTrips(int id)
 		{
@@ -71,12 +71,10 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 4. CREATE DRIVER (GET) ---
 		[Authorize(Roles = "FleetManager")]
 		[HttpGet]
 		public IActionResult Create() => View();
 
-		// --- 5. CREATE DRIVER (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "FleetManager")]
@@ -84,7 +82,7 @@ namespace TransportationManagement.Controllers
 		{
 			try
 			{
-				// Exclude navigation properties from validation
+				
 				ModelState.Remove("User");
 				ModelState.Remove("UserId");
 				ModelState.Remove("Trips");
@@ -93,7 +91,7 @@ namespace TransportationManagement.Controllers
 
 				if (!ModelState.IsValid) return View(driver);
 
-				// FIX: Use CreateDriverAsync, not UpdateDriverAsync
+				
 				var result = await _driverService.CreateDriverAsync(driver, email, password);
 
 				if (result.Success)
@@ -114,7 +112,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 6. DRIVER DASHBOARD (Self) ---
 		[HttpGet]
 		public async Task<IActionResult> Dashboard()
 		{
@@ -138,7 +135,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 7. EDIT DRIVER (GET) ---
+		
 		[Authorize(Roles = "FleetManager")]
 		[HttpGet]
 		public async Task<IActionResult> Edit(int id)
@@ -148,7 +145,7 @@ namespace TransportationManagement.Controllers
 			return View(driver);
 		}
 
-		// --- 7. EDIT DRIVER (POST) ---
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "FleetManager")]
@@ -172,7 +169,7 @@ namespace TransportationManagement.Controllers
 			return View(driver);
 		}
 
-		// --- 8. DELETE DRIVER ---
+		
 		[HttpPost]
 		[Authorize(Roles = "FleetManager")]
 		[ValidateAntiForgeryToken]
@@ -186,8 +183,7 @@ namespace TransportationManagement.Controllers
 
 			return RedirectToAction(nameof(Index));
 		}
-
-		// --- 9. START TRIP ---
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "Driver")]
@@ -195,14 +191,13 @@ namespace TransportationManagement.Controllers
 		{
 			try
 			{
-				// 🔹 Get driver & vehicle
+				
 				var driver = await _context.Drivers.FindAsync(newTrip.driverId);
 				var vehicle = await _context.Vehicles.FindAsync(newTrip.vehicleId);
 
 				if (driver == null || vehicle == null)
 					return NotFound();
 
-				// 🔴 1. CHECK: Driver already has active trip
 				var existingTrip = await _context.Trips
 					.FirstOrDefaultAsync(t => t.driverId == newTrip.driverId
 										  && t.tripStatus == TripStatus.IN_PROGRESS);
@@ -213,14 +208,14 @@ namespace TransportationManagement.Controllers
 					return RedirectToAction("Dashboard");
 				}
 
-				// 🔴 2. CHECK: Driver status
+			
 				if (driver.status == DriverStatus.ON_TRIP)
 				{
 					TempData["Error"] = "Driver is already on another trip!";
 					return RedirectToAction("Dashboard");
 				}
 
-				// 🔴 3. CHECK: Vehicle availability
+			
 				if (vehicle.status == VehicleStatus.ON_TRIP
 					|| vehicle.status == VehicleStatus.IN_SERVICE)
 				{
@@ -228,7 +223,7 @@ namespace TransportationManagement.Controllers
 					return RedirectToAction("Dashboard");
 				}
 
-				// 🔴 4. CHECK: Fuel
+				
 				double requiredFuel = 20;
 
 				if (vehicle.currentfuel < requiredFuel)
@@ -238,7 +233,7 @@ namespace TransportationManagement.Controllers
 						new { vehicleId = vehicle.vehicleId });
 				}
 
-				// ✅ 5. START TRIP
+			
 				driver.status = DriverStatus.ON_TRIP;
 				vehicle.status = VehicleStatus.ON_TRIP;
 

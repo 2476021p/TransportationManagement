@@ -20,7 +20,7 @@ namespace TransportationManagement.Controllers
 			_vehicleService = vehicleService;
 		}
 
-		// --- 1. INDEX ---
+	
 		public async Task<IActionResult> Index()
 		{
 			try
@@ -35,7 +35,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 2. SCHEDULE MAINTENANCE (GET) ---
+
 		[HttpGet]
 		public async Task<IActionResult> ScheduleMaintenance()
 		{
@@ -51,7 +51,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 3. SCHEDULE MAINTENANCE (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> ScheduleMaintenance(MaintenanceRecord record)
@@ -80,8 +79,7 @@ namespace TransportationManagement.Controllers
 				return View(record);
 			}
 		}
-
-		// --- 4. UPDATE SERVICE RECORD (GET) ---
+	
 		[HttpGet]
 		public async Task<IActionResult> UpdateServiceRecord(int id)
 		{
@@ -106,7 +104,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 5. UPDATE SERVICE RECORD (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> UpdateServiceRecord(
@@ -138,7 +135,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 6. DELETE (GET - Confirmation) ---
+	
 		[HttpGet]
 		public async Task<IActionResult> Delete(int id)
 		{
@@ -163,7 +160,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 7. DELETE CONFIRMED (POST) ---
+		
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> DeleteConfirmed(int id)
@@ -185,7 +182,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 8. MAINTENANCE HISTORY ---
 		[HttpGet]
 		public async Task<IActionResult> GetMaintenanceHistory(int vehicleId)
 		{
@@ -203,7 +199,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- PRIVATE HELPER ---
+		
 		private async Task PopulateVehicles()
 		{
 			try

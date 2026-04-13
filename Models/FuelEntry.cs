@@ -25,7 +25,7 @@ namespace TransportationManagement.Models
         [Required]
         public DateTime entryDate { get; set; }
 
-        // Navigation property
+       
         [ForeignKey("vehicleId")]
         public Vehicle? Vehicle { get; set; }
 

@@ -22,7 +22,7 @@ namespace TransportationManagement.Controllers
 			_userManager = userManager;
 		}
 
-		// ================= DASHBOARD =================
+
 		public IActionResult Dashboard()
 		{
 			var model = new AdminDashboardViewModel
@@ -40,7 +40,6 @@ namespace TransportationManagement.Controllers
 
 		[Authorize(Roles = "Admin")]
 
-		// ================= USERS =================
 		public async Task<IActionResult> Users()
 		{
 			var users = _userManager.Users.ToList();
@@ -49,7 +48,7 @@ namespace TransportationManagement.Controllers
 
 			foreach (var u in users)
 			{
-				// ✅ Get role from Identity role table
+				
 				var roles = await _userManager.GetRolesAsync(u);
 
 				model.Add(new UserWithRoleViewModel
@@ -57,18 +56,18 @@ namespace TransportationManagement.Controllers
 					Id = u.Id,
 					FullName = u.FullName ?? "",
 					Email = u.Email ?? "",
-					Role = roles.FirstOrDefault() ?? "No Role" // ✅ gets role correctly
+					Role = roles.FirstOrDefault() ?? "No Role" 
 				});
 			}
 
 			return View(model);
 		}
 
-		// CREATE USER GET
+		
 		[HttpGet]
 		public IActionResult CreateUser()
 		{
-			// ✅ Pass roles to ViewBag
+			
 			ViewBag.Roles = new List<SelectListItem>
 	{
 		new SelectListItem { Value = "Admin", Text = "Admin" },
@@ -81,14 +80,14 @@ namespace TransportationManagement.Controllers
 			return View();
 		}
 
-		// CREATE USER POST
+	
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> CreateUser(CreateUserViewModel model)
 		{
 			if (!ModelState.IsValid)
 			{
-				// ✅ Re-pass roles on validation failure
+				
 				ViewBag.Roles = new List<SelectListItem>
 		{
 			new SelectListItem { Value = "Admin", Text = "Admin" },
@@ -123,14 +122,14 @@ namespace TransportationManagement.Controllers
 				return View(model);
 			}
 
-			// ✅ Assign Role
+			
 			await _userManager.AddToRoleAsync(user, model.Role);
 
 			TempData["success"] = "User created successfully!";
 			return RedirectToAction(nameof(Users));
 		}
 
-		// ================ EDIT USER GET ================
+		
 		[HttpGet]
 		public async Task<IActionResult> EditUser(string id)
 		{
@@ -159,7 +158,7 @@ namespace TransportationManagement.Controllers
 			return View(model);
 		}
 
-		// ================ EDIT USER POST ================
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> EditUser(EditUserViewModel model)
@@ -177,7 +176,7 @@ namespace TransportationManagement.Controllers
 
 			await _userManager.UpdateAsync(user);
 
-			// Update Role
+			
 			var currentRoles = await _userManager.GetRolesAsync(user);
 			await _userManager.RemoveFromRolesAsync(user, currentRoles);
 			await _userManager.AddToRoleAsync(user, model.Role);
@@ -186,7 +185,7 @@ namespace TransportationManagement.Controllers
 			return RedirectToAction(nameof(Users));
 		}
 
-		// ================ DELETE USER ================
+	
 		public async Task<IActionResult> DeleteUser(string id)
 		{
 			var user = await _userManager.FindByIdAsync(id);
@@ -200,32 +199,31 @@ namespace TransportationManagement.Controllers
 
 
 
-		// ================= DRIVERS LIST =================
+		
 		public IActionResult Drivers()
 		{
 			var drivers = _context.Drivers.ToList();
 			return View(drivers);
 		}
 
-		// ================= ADD DRIVER (GET) =================
+	
 		[HttpGet]
 		public IActionResult AddDriver()
 		{
 			return View("~/Views/Driver/AddDriver.cshtml");
 		}
 
-		// ================= ADD DRIVER (POST) =================
 		[HttpPost]
 		public async Task<IActionResult> AddDriver(Driver driver, string email, string password)
 		{
 			if (!ModelState.IsValid)
 				return View("~/Views/Driver/AddDriver.cshtml", driver);
 
-			// Save Driver
+		
 			_context.Drivers.Add(driver);
 			await _context.SaveChangesAsync();
 
-			// Create Login
+			
 			var user = new ApplicationUser
 			{
 				UserName = email,
@@ -244,10 +242,9 @@ namespace TransportationManagement.Controllers
 				return View("~/Views/Driver/AddDriver.cshtml", driver);
 			}
 
-			// Assign Role
 			await _userManager.AddToRoleAsync(user, "Driver");
 
-			// Link Driver with User
+			
 			driver.userId = user.Id;
 			_context.Update(driver);
 			await _context.SaveChangesAsync();
@@ -255,7 +252,7 @@ namespace TransportationManagement.Controllers
 			return RedirectToAction(nameof(Drivers));
 		}
 
-		// ================= EDIT DRIVER (GET) =================
+	
 		[HttpGet]
 		public async Task<IActionResult> EditDriver(int id)
 		{
@@ -265,7 +262,7 @@ namespace TransportationManagement.Controllers
 			return View("~/Views/Driver/AddDriver.cshtml", driver);
 		}
 
-		// ================= EDIT DRIVER (POST) =================
+		
 		[HttpPost]
 		public async Task<IActionResult> EditDriver(Driver driver)
 		{
@@ -278,7 +275,6 @@ namespace TransportationManagement.Controllers
 			return RedirectToAction(nameof(Drivers));
 		}
 
-		// ================= DELETE DRIVER =================
 		public async Task<IActionResult> DeleteDriver(int id)
 		{
 			var driver = await _context.Drivers.FindAsync(id);
@@ -292,7 +288,6 @@ namespace TransportationManagement.Controllers
 			return RedirectToAction(nameof(Drivers));
 		}
 
-		// ================= NAVIGATION =================
 
 		public IActionResult Vehicles()
 		{

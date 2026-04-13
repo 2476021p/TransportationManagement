@@ -18,13 +18,13 @@ namespace TransportationManagement.Services
 			_userManager = userManager;
 		}
 
-		// --- LIST ALL ---
+		
 		public async Task<List<Driver>> ListAllDriversAsync()
 		{
 			return await _context.Drivers.ToListAsync();
 		}
 
-		// --- GET BY ID ---
+		
 		public async Task<Driver?> GetDriverByIdAsync(int id)
 		{
 			return await _context.Drivers
@@ -32,7 +32,7 @@ namespace TransportationManagement.Services
 				.FirstOrDefaultAsync(d => d.driverId == id);
 		}
 
-		// --- CREATE DRIVER ---
+
 		public async Task<(bool Success, string Message)> CreateDriverAsync(
 			Driver driver, string email, string password)
 		{
@@ -48,7 +48,7 @@ namespace TransportationManagement.Services
 				if (contactExists)
 					return (false, "Contact number already exists.");
 
-				// Create Identity user
+				
 				var user = new ApplicationUser
 				{
 					UserName = email,
@@ -63,8 +63,7 @@ namespace TransportationManagement.Services
 
 				await _userManager.AddToRoleAsync(user, "Driver");
 
-				// Link Identity user to driver record
-				// Use whatever property your Driver model has for the user link
+			
 				driver.IsActive = true;
 				await _context.Drivers.AddAsync(driver);
 				await _context.SaveChangesAsync();
@@ -77,7 +76,7 @@ namespace TransportationManagement.Services
 			}
 		}
 
-		// --- UPDATE DRIVER ---
+		
 		public async Task<(bool Success, string Message)> UpdateDriverAsync(Driver driver)
 		{
 			try
@@ -105,7 +104,7 @@ namespace TransportationManagement.Services
 			}
 		}
 
-		// --- DELETE DRIVER ---
+	
 		public async Task<(bool Success, string Message)> DeleteDriverAsync(int id)
 		{
 			try
@@ -114,14 +113,14 @@ namespace TransportationManagement.Services
 				if (driver == null)
 					return (false, "Driver not found.");
 
-				// Block if active trip exists
+				
 				var hasActiveTrip = await _context.Trips
 					.AnyAsync(t => t.driverId == id
 						&& t.tripStatus == TripStatus.IN_PROGRESS);
 				if (hasActiveTrip)
 					return (false, "Cannot delete driver with an active trip.");
 
-				// Nullify driverId on linked trips
+				
 				var linkedTrips = await _context.Trips
 					.Where(t => t.driverId == id)
 					.ToListAsync();
@@ -139,7 +138,7 @@ namespace TransportationManagement.Services
 			}
 		}
 
-		// --- DASHBOARD DATA ---
+	
 		public async Task<List<Trip>> GetDriverDashboardDataAsync(int driverId)
 		{
 			return await _context.Trips
@@ -149,7 +148,6 @@ namespace TransportationManagement.Services
 				.ToListAsync();
 		}
 
-		// --- START TRIP ---
 		public async Task<(bool Success, string Message)> TryStartTripAsync(Trip trip)
 		{
 			var driver = await _context.Drivers

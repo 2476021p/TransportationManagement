@@ -35,14 +35,13 @@ namespace TransportationManagement.Models
 		[Required]
 		public TripStatus tripStatus { get; set; } = TripStatus.IN_PROGRESS;
 
-		// ✅ NEW - Start and End DateTime
+		
 		[Display(Name = "Start Date & Time")]
 		public DateTime? startDateTime { get; set; }
 
 		[Display(Name = "End Date & Time")]
 		public DateTime? endDateTime { get; set; }
 
-		// Navigation properties
 		[ForeignKey("vehicleId")]
 		public Vehicle? Vehicle { get; set; }
 

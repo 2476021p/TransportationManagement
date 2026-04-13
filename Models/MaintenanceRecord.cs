@@ -28,11 +28,10 @@ namespace TransportationManagement.Models
 		[StringLength(255)]
 		public string? remarks { get; set; }
 
-		// ADD THIS - Status field
+		
 		public MaintenanceStatus status { get; set; }
 			= MaintenanceStatus.SCHEDULED;
 
-		// Navigation property
 		[ForeignKey("vehicleId")]
 		public Vehicle? Vehicle { get; set; }
 	}

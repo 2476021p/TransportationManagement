@@ -54,7 +54,7 @@ namespace TransportationManagement.Services
 			existing.remarks = record.remarks;
 			existing.status = record.status;
 
-			// If marking as COMPLETED, set vehicle back to ACTIVE
+	
 			if (record.status == MaintenanceStatus.COMPLETED)
 				await _maintenanceRepository.UpdateVehicleStatusAsync(
 					record.vehicleId, VehicleStatus.ACTIVE);
@@ -75,7 +75,6 @@ namespace TransportationManagement.Services
 			if (record.status == MaintenanceStatus.COMPLETED)
 				return (false, "Completed maintenance cannot be deleted.");
 
-			// Reset vehicle to ACTIVE when maintenance is removed
 			await _maintenanceRepository.UpdateVehicleStatusAsync(
 				record.vehicleId, VehicleStatus.ACTIVE);
 

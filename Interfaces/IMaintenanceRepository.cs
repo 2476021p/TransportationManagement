@@ -12,7 +12,6 @@ namespace TransportationManagement.Interfaces
 		Task DeleteMaintenanceAsync(int maintenanceId);
 		Task<bool> MaintenanceExistsAsync(int maintenanceId);
 
-		// Logic helpers
 		Task<bool> IsVehicleOnTripAsync(int vehicleId);
 		Task<bool> HasActiveMaintenanceAsync(int vehicleId);
 		Task<Vehicle?> GetVehicleByIdAsync(int vehicleId);

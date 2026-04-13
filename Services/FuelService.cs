@@ -32,7 +32,7 @@ namespace TransportationManagement.Services
 
 			await _fuelRepository.AddFuelEntryAsync(fuelEntry);
 
-			// Update vehicle fuel level
+			
 			vehicle.currentfuel += (double)fuelEntry.fuelQuantity;
 			await _fuelRepository.SaveChangesAsync();
 

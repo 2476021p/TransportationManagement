@@ -36,7 +36,6 @@ namespace TransportationManagement.Models
 
         public double currentfuel { get; set; }
 
-        // Navigation properties
         public ICollection<Trip> Trips { get; set; } = new List<Trip>();
         public ICollection<MaintenanceRecord> MaintenanceRecords { get; set; } = new List<MaintenanceRecord>();
         public ICollection<FuelEntry> FuelEntries { get; set; } = new List<FuelEntry>();

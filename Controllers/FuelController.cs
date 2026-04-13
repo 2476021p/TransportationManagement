@@ -23,7 +23,7 @@ namespace TransportationManagement.Controllers
 			_context = context;
 		}
 
-		// --- 1. INDEX ---
+		
 		public async Task<IActionResult> Index()
 		{
 			try
@@ -38,30 +38,41 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 2. ADD FUEL ENTRY (GET) ---
+	
 		[HttpGet]
-		public async Task<IActionResult> AddFuelEntry()
+		[Authorize(Roles = "Driver,FleetManager")]
+		public async Task<IActionResult> AddFuelEntry(int? vehicleId)
 		{
 			try
 			{
 				await PopulateVehicles();
-				return View();
+
+				var model = new FuelEntry();
+
+				if (vehicleId.HasValue)
+				{
+					model.vehicleId = vehicleId.Value;
+				}
+
+				return View(model);
 			}
 			catch (Exception ex)
 			{
-				TempData["Error"] = "Error initializing form: " + ex.Message;
-				return RedirectToAction(nameof(Index));
+				TempData["Error"] = "Error loading fuel entry page: " + ex.Message;
+				return RedirectToAction("Dashboard", "Driver");
 			}
 		}
 
-		// --- 3. ADD FUEL ENTRY (POST) ---
+
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
+		[Authorize(Roles = "Driver,FleetManager")]
 		public async Task<IActionResult> AddFuelEntry(FuelEntry fuelEntry)
 		{
 			try
 			{
-				// Remove navigation validation issue
+				
 				ModelState.Remove("Vehicle");
 
 				if (!ModelState.IsValid)
@@ -70,7 +81,7 @@ namespace TransportationManagement.Controllers
 					return View(fuelEntry);
 				}
 
-				// 🔥 Get vehicle
+				
 				var vehicle = await _context.Vehicles.FindAsync(fuelEntry.vehicleId);
 
 				if (vehicle == null)
@@ -79,10 +90,9 @@ namespace TransportationManagement.Controllers
 					return RedirectToAction("Dashboard", "Driver");
 				}
 
-				// ✅ SAVE FUEL ENTRY
+			
 				await _fuelService.AddFuelEntryAsync(fuelEntry);
 
-				// 🔥 UPDATE CURRENT FUEL
 				vehicle.currentfuel += (double)fuelEntry.fuelQuantity;
 
 				await _context.SaveChangesAsync();
@@ -101,7 +111,6 @@ namespace TransportationManagement.Controllers
 		}
 
 
-		// --- 4. GENERATE FUEL REPORT ---
 		[HttpGet]
 		[Authorize(Roles = "Admin,FleetManager")]
 		public async Task<IActionResult> GenerateFuelReport(int? vehicleId)
@@ -122,9 +131,8 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 5. EDIT (GET) ---
 		[HttpGet]
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> Edit(int id)
 		{
 			try
@@ -141,10 +149,9 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 6. EDIT (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> Edit(FuelEntry fuelEntry)
 		{
 			try
@@ -169,9 +176,9 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 7. DELETE (GET - Confirmation) ---
+	
 		[HttpGet]
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> Delete(int id)
 		{
 			try
@@ -187,10 +194,9 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 8. DELETE CONFIRMED (POST) ---
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
-		[Authorize(Roles = "Admin,FleetManager")]
+		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			try
@@ -206,7 +212,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- PRIVATE HELPER ---
 		private async Task PopulateVehicles()
 		{
 			try

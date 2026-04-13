@@ -27,16 +27,16 @@ namespace TransportationManagement.Services
 
 		public async Task<(bool Success, string Message)> CreateTripAsync(Trip trip)
 		{
-			// Check driver availability
+			
 			if (trip.driverId.HasValue &&
 				await _tripRepository.IsDriverBusyAsync(trip.driverId.Value))
 				return (false, "Driver is already assigned to another active trip.");
 
-			// Check vehicle availability
+			
 			if (await _tripRepository.IsVehicleBusyAsync(trip.vehicleId))
 				return (false, "Vehicle is already assigned to another active trip.");
 
-			// Check vehicle status
+			
 			var vehicle = await _vehicleRepository.GetVehicleByIdAsync(trip.vehicleId);
 			if (vehicle == null || vehicle.status == VehicleStatus.RETIRED)
 				return (false, "Vehicle is not available for trips.");
@@ -46,7 +46,7 @@ namespace TransportationManagement.Services
 
 			await _tripRepository.AddTripAsync(trip);
 
-			// Update statuses immediately upon planning
+			
 			if (trip.driverId.HasValue)
 			{
 				var driver = await _driverRepository.GetDriverByIdAsync(trip.driverId.Value);
@@ -94,7 +94,7 @@ namespace TransportationManagement.Services
 			if (trip.tripStatus != TripStatus.PLANNED)
 				return (false, "Trip is not in PLANNED state.");
 
-			// Check minimum fuel
+			
 			double requiredFuel = 20;
 			if (trip.Vehicle == null || trip.Vehicle.currentfuel < requiredFuel)
 				return (false, $"Minimum {requiredFuel}L fuel required!");

@@ -23,7 +23,7 @@ namespace TransportationManagement.Controllers
 			_driverService = driverService;
 		}
 
-		// --- 1. INDEX ---
+		
 		public async Task<IActionResult> Index()
 		{
 			try
@@ -38,7 +38,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 2. GET TRIP PLAN ---
+	
 		[HttpGet]
 		public async Task<IActionResult> GetTripPlan(int id)
 		{
@@ -55,7 +55,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 3. CREATE TRIP (GET) ---
+
 		[HttpGet]
 		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> CreateTrip()
@@ -72,7 +72,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 4. CREATE TRIP (POST) ---
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "FleetManager")]
@@ -80,7 +80,7 @@ namespace TransportationManagement.Controllers
 		{
 			try
 			{
-				// Remove nav props from validation
+				
 				ModelState.Remove("Driver");
 				ModelState.Remove("Vehicle");
 
@@ -110,7 +110,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 5. UPDATE TRIP STATUS (GET) ---
 		[HttpGet]
 		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> UpdateTripStatus(int id)
@@ -129,7 +128,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 6. UPDATE TRIP STATUS (POST) ---
+		
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "FleetManager")]
@@ -158,7 +157,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 7. DELETE (GET - Confirmation) ---
 		[HttpGet]
 		[Authorize(Roles = "FleetManager")]
 		public async Task<IActionResult> Delete(int id)
@@ -176,7 +174,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 8. DELETE CONFIRMED (POST) ---
+
 		[HttpPost, ActionName("Delete")]
 		[ValidateAntiForgeryToken]
 		[Authorize(Roles = "FleetManager")]
@@ -195,7 +193,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 9. START TRIP (Driver) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> StartTrip(int tripId)
@@ -217,7 +214,7 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- 10. COMPLETE TRIP (Driver) ---
+
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> CompleteTrip(int tripId)
@@ -235,7 +232,6 @@ namespace TransportationManagement.Controllers
 			}
 		}
 
-		// --- PRIVATE HELPER ---
 		private async Task PopulateDropdowns()
 		{
 			try

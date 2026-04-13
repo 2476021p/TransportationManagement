@@ -24,11 +24,11 @@ namespace TransportationManagement.Controllers
 			_context = context;
 		}
 
-		// --- 1. LOGIN (GET) ---
+		
 		[HttpGet]
 		public IActionResult Login() => View();
 
-		// --- 2. LOGIN (POST) ---
+	
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Login(LoginViewModel model)
@@ -50,7 +50,7 @@ namespace TransportationManagement.Controllers
 			{
 				var roles = await _userManager.GetRolesAsync(user);
 
-				// DRIVER REDIRECT
+				
 				if (roles.Contains("Driver"))
 				{
 					var driver = await _context.Drivers
@@ -60,7 +60,7 @@ namespace TransportationManagement.Controllers
 
 					if (driver != null)
 					{
-						// Sync userId if missing
+						
 						if (string.IsNullOrEmpty(driver.userId))
 						{
 							driver.userId = user.Id;
@@ -82,28 +82,26 @@ namespace TransportationManagement.Controllers
 					}
 				}
 
-				// ADMIN REDIRECT
 				if (roles.Contains("Admin"))
 				{
 					HttpContext.Session.SetString("Role", "Admin");
 					return RedirectToAction("Dashboard", "Admin");
 				}
 
-				// FLEET MANAGER REDIRECT
+				
 				if (roles.Contains("FleetManager"))
 				{
 					HttpContext.Session.SetString("Role", "FleetManager");
 					return RedirectToAction("Dashboard", "Admin");
 				}
 
-				// ✅ FIX: MAINTENANCE ENGINEER REDIRECT (was completely missing!)
 				if (roles.Contains("MaintenanceEngineer"))
 				{
 					HttpContext.Session.SetString("Role", "MaintenanceEngineer");
 					return RedirectToAction("Index", "Maintenance");
 				}
 
-				// Fallback
+
 				return RedirectToAction("Index", "Home");
 			}
 
@@ -111,7 +109,6 @@ namespace TransportationManagement.Controllers
 			return View(model);
 		}
 
-		// --- 3. CREATE USER (POST) ---
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> CreateUser(CreateUserViewModel model)
@@ -135,7 +132,6 @@ namespace TransportationManagement.Controllers
 			{
 				await _userManager.AddToRoleAsync(user, model.Role);
 
-				// Link Identity user to Driver table if role is Driver
 				if (model.Role == "Driver")
 				{
 					var existingDriver = await _context.Drivers
@@ -172,7 +168,6 @@ namespace TransportationManagement.Controllers
 			return View(model);
 		}
 
-		// --- 4. LOGOUT ---
 		[HttpPost]
 		public async Task<IActionResult> Logout()
 		{
@@ -181,7 +176,6 @@ namespace TransportationManagement.Controllers
 			return RedirectToAction("Login");
 		}
 
-		// --- HELPER ---
 		private List<SelectListItem> GetRolesList()
 		{
 			return new List<SelectListItem>
@@ -189,7 +183,7 @@ namespace TransportationManagement.Controllers
 				new SelectListItem { Value = "Admin", Text = "Admin" },
 				new SelectListItem { Value = "FleetManager", Text = "Fleet Manager" },
 				new SelectListItem { Value = "Driver", Text = "Driver" },
-                // ✅ FIX: MaintenanceEngineer was missing from dropdown!
+             
                 new SelectListItem { Value = "MaintenanceEngineer", Text = "Maintenance Engineer" }
 			};
 		}
